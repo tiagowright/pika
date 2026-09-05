@@ -1,0 +1,11 @@
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# Build output — regenerate with build.sh / install.sh
+Pika.app/
+
+# Regenerable from AppIcon.svg via make_icon.sh
+AppIcon.iconset/
+
+.DS_Store
