@@ -1,62 +1,62 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
-  <!-- App Icon Background -->
-  <rect x="24" y="24" width="464" height="464" rx="96" fill="#A8D5E5"/>
+  <!-- App Icon Background — Catppuccin Mocha "Base", matching the app's own panel background (Theme.swift) -->
+  <rect x="24" y="24" width="464" height="464" rx="96" fill="#1E1E2E"/>
 
   <!-- Pika, scaled up ~12% around its own center so it fills more of
        the icon (per feedback: bring it closer to the edges). Adjust the
        `scale(...)` factor below to taste — everything pika-related lives
        in this one group so resizing never touches individual shapes. -->
   <g transform="translate(256,256) scale(1.12) translate(-256,-282.5)">
-    <!-- Left Ear -->
+    <!-- Left Ear — outer: Mauve, inner: Rosewater -->
     <g transform="translate(160, 160) rotate(-25)">
-      <ellipse cx="0" cy="0" rx="35" ry="55" fill="#3B3A39"/>
-      <ellipse cx="-8" cy="0" rx="18" ry="40" fill="#F4E6D4"/>
+      <ellipse cx="0" cy="0" rx="35" ry="55" fill="#CBA6F7"/>
+      <ellipse cx="-8" cy="0" rx="18" ry="40" fill="#F5E0DC"/>
     </g>
 
     <!-- Right Ear -->
     <g transform="translate(352, 160) rotate(25)">
-      <ellipse cx="0" cy="0" rx="35" ry="55" fill="#3B3A39"/>
-      <ellipse cx="8" cy="0" rx="18" ry="40" fill="#F4E6D4"/>
+      <ellipse cx="0" cy="0" rx="35" ry="55" fill="#CBA6F7"/>
+      <ellipse cx="8" cy="0" rx="18" ry="40" fill="#F5E0DC"/>
     </g>
 
-    <!-- Main Body -->
-    <path d="M 150 260 C 110 380, 130 460, 256 460 C 382 460, 402 380, 362 260 C 340 180, 172 180, 150 260 Z" fill="#D2A878"/>
+    <!-- Main Body — Peach -->
+    <path d="M 150 260 C 110 380, 130 460, 256 460 C 382 460, 402 380, 362 260 C 340 180, 172 180, 150 260 Z" fill="#FAB387"/>
 
-    <!-- Gray Fur Patch (Left Shoulder) -->
-    <path d="M 150 260 C 130 320, 150 380, 180 380 C 200 380, 200 320, 190 260 Z" fill="#999793"/>
+    <!-- Shoulder Shading — Surface2 -->
+    <path d="M 150 260 C 130 320, 150 380, 180 380 C 200 380, 200 320, 190 260 Z" fill="#585B70"/>
 
-    <!-- Belly / Chest Area -->
-    <path d="M 180 290 C 160 380, 200 460, 256 460 C 312 460, 352 380, 332 290 C 310 240, 202 240, 180 290 Z" fill="#F4E6D4"/>
+    <!-- Belly / Chest Area — Rosewater -->
+    <path d="M 180 290 C 160 380, 200 460, 256 460 C 312 460, 352 380, 332 290 C 310 240, 202 240, 180 290 Z" fill="#F5E0DC"/>
 
     <!-- Left Paw -->
-    <ellipse cx="210" cy="385" rx="24" ry="14" fill="#D2A878"/>
+    <ellipse cx="210" cy="385" rx="24" ry="14" fill="#FAB387"/>
     <!-- Right Paw -->
-    <ellipse cx="302" cy="375" rx="24" ry="14" fill="#D2A878"/>
+    <ellipse cx="302" cy="375" rx="24" ry="14" fill="#FAB387"/>
 
-    <!-- Face / Snout Highlight -->
-    <ellipse cx="256" cy="245" rx="35" ry="25" fill="#E8CDA9"/>
+    <!-- Face / Snout Highlight — Flamingo -->
+    <ellipse cx="256" cy="245" rx="35" ry="25" fill="#F2CDCD"/>
 
-    <!-- Eyes -->
-    <circle cx="205" cy="210" r="14" fill="#4A3B32"/>
-    <circle cx="209" cy="205" r="4" fill="#FFFFFF"/>
+    <!-- Eyes — Crust, with Text-colored highlight -->
+    <circle cx="205" cy="210" r="14" fill="#11111B"/>
+    <circle cx="209" cy="205" r="4" fill="#CDD6F4"/>
 
-    <circle cx="307" cy="210" r="14" fill="#4A3B32"/>
-    <circle cx="311" cy="205" r="4" fill="#FFFFFF"/>
+    <circle cx="307" cy="210" r="14" fill="#11111B"/>
+    <circle cx="311" cy="205" r="4" fill="#CDD6F4"/>
 
-    <!-- Nose -->
-    <path d="M 242 240 Q 256 230 270 240 Q 266 255 256 255 Q 246 255 242 240 Z" fill="#54514F"/>
+    <!-- Nose — Maroon -->
+    <path d="M 242 240 Q 256 230 270 240 Q 266 255 256 255 Q 246 255 242 240 Z" fill="#EBA0AC"/>
 
-    <!-- Mouth -->
-    <path d="M 240 265 Q 256 278 256 255 Q 256 278 272 265" fill="none" stroke="#3B3A39" stroke-width="4" stroke-linecap="round"/>
+    <!-- Mouth — Surface2 -->
+    <path d="M 240 265 Q 256 278 256 255 Q 256 278 272 265" fill="none" stroke="#585B70" stroke-width="4" stroke-linecap="round"/>
 
-    <!-- Whiskers (Left) -->
-    <line x1="225" y1="245" x2="120" y2="235" stroke="#3B3A39" stroke-width="3" stroke-linecap="round"/>
-    <line x1="225" y1="255" x2="110" y2="265" stroke="#3B3A39" stroke-width="3" stroke-linecap="round"/>
-    <line x1="225" y1="265" x2="130" y2="300" stroke="#3B3A39" stroke-width="3" stroke-linecap="round"/>
+    <!-- Whiskers (Left) — Surface2 -->
+    <line x1="225" y1="245" x2="120" y2="235" stroke="#585B70" stroke-width="3" stroke-linecap="round"/>
+    <line x1="225" y1="255" x2="110" y2="265" stroke="#585B70" stroke-width="3" stroke-linecap="round"/>
+    <line x1="225" y1="265" x2="130" y2="300" stroke="#585B70" stroke-width="3" stroke-linecap="round"/>
 
     <!-- Whiskers (Right) -->
-    <line x1="287" y1="245" x2="392" y2="235" stroke="#3B3A39" stroke-width="3" stroke-linecap="round"/>
-    <line x1="287" y1="255" x2="402" y2="265" stroke="#3B3A39" stroke-width="3" stroke-linecap="round"/>
-    <line x1="287" y1="265" x2="382" y2="300" stroke="#3B3A39" stroke-width="3" stroke-linecap="round"/>
+    <line x1="287" y1="245" x2="392" y2="235" stroke="#585B70" stroke-width="3" stroke-linecap="round"/>
+    <line x1="287" y1="255" x2="402" y2="265" stroke="#585B70" stroke-width="3" stroke-linecap="round"/>
+    <line x1="287" y1="265" x2="382" y2="300" stroke="#585B70" stroke-width="3" stroke-linecap="round"/>
   </g>
 </svg>
