@@ -1,62 +1,29 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
-  <!-- App Icon Background — Catppuccin Mocha "Base", matching the app's own panel background (Theme.swift) -->
-  <rect x="24" y="24" width="464" height="464" rx="96" fill="#1E1E2E"/>
-
-  <!-- Pika, scaled up ~12% around its own center so it fills more of
-       the icon (per feedback: bring it closer to the edges). Adjust the
-       `scale(...)` factor below to taste — everything pika-related lives
-       in this one group so resizing never touches individual shapes. -->
-  <g transform="translate(256,256) scale(1.12) translate(-256,-282.5)">
-    <!-- Left Ear — outer: Mauve, inner: Rosewater -->
-    <g transform="translate(160, 160) rotate(-25)">
-      <ellipse cx="0" cy="0" rx="35" ry="55" fill="#CBA6F7"/>
-      <ellipse cx="-8" cy="0" rx="18" ry="40" fill="#F5E0DC"/>
-    </g>
-
-    <!-- Right Ear -->
-    <g transform="translate(352, 160) rotate(25)">
-      <ellipse cx="0" cy="0" rx="35" ry="55" fill="#CBA6F7"/>
-      <ellipse cx="8" cy="0" rx="18" ry="40" fill="#F5E0DC"/>
-    </g>
-
-    <!-- Main Body — Peach -->
-    <path d="M 150 260 C 110 380, 130 460, 256 460 C 382 460, 402 380, 362 260 C 340 180, 172 180, 150 260 Z" fill="#FAB387"/>
-
-    <!-- Shoulder Shading — Surface2 -->
-    <path d="M 150 260 C 130 320, 150 380, 180 380 C 200 380, 200 320, 190 260 Z" fill="#585B70"/>
-
-    <!-- Belly / Chest Area — Rosewater -->
-    <path d="M 180 290 C 160 380, 200 460, 256 460 C 312 460, 352 380, 332 290 C 310 240, 202 240, 180 290 Z" fill="#F5E0DC"/>
-
-    <!-- Left Paw -->
-    <ellipse cx="210" cy="385" rx="24" ry="14" fill="#FAB387"/>
-    <!-- Right Paw -->
-    <ellipse cx="302" cy="375" rx="24" ry="14" fill="#FAB387"/>
-
-    <!-- Face / Snout Highlight — Flamingo -->
-    <ellipse cx="256" cy="245" rx="35" ry="25" fill="#F2CDCD"/>
-
-    <!-- Eyes — Crust, with Text-colored highlight -->
-    <circle cx="205" cy="210" r="14" fill="#11111B"/>
-    <circle cx="209" cy="205" r="4" fill="#CDD6F4"/>
-
-    <circle cx="307" cy="210" r="14" fill="#11111B"/>
-    <circle cx="311" cy="205" r="4" fill="#CDD6F4"/>
-
-    <!-- Nose — Maroon -->
-    <path d="M 242 240 Q 256 230 270 240 Q 266 255 256 255 Q 246 255 242 240 Z" fill="#EBA0AC"/>
-
-    <!-- Mouth — Surface2 -->
-    <path d="M 240 265 Q 256 278 256 255 Q 256 278 272 265" fill="none" stroke="#585B70" stroke-width="4" stroke-linecap="round"/>
-
-    <!-- Whiskers (Left) — Surface2 -->
-    <line x1="225" y1="245" x2="120" y2="235" stroke="#585B70" stroke-width="3" stroke-linecap="round"/>
-    <line x1="225" y1="255" x2="110" y2="265" stroke="#585B70" stroke-width="3" stroke-linecap="round"/>
-    <line x1="225" y1="265" x2="130" y2="300" stroke="#585B70" stroke-width="3" stroke-linecap="round"/>
-
-    <!-- Whiskers (Right) -->
-    <line x1="287" y1="245" x2="392" y2="235" stroke="#585B70" stroke-width="3" stroke-linecap="round"/>
-    <line x1="287" y1="255" x2="402" y2="265" stroke="#585B70" stroke-width="3" stroke-linecap="round"/>
-    <line x1="287" y1="265" x2="382" y2="300" stroke="#585B70" stroke-width="3" stroke-linecap="round"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none" role="img" aria-labelledby="title desc">
+  <title id="title">Pica app icon</title>
+  <desc id="desc">A friendly peach-colored pika with round ears, rosy cheeks and a little smile on a Catppuccin Mocha background.</desc>
+  <!-- Catppuccin Mocha: Base, Surface 0, Peach, Yellow, Flamingo, Rosewater, Green -->
+  <rect width="512" height="512" rx="116" fill="#1e1e2e"/>
+  <circle cx="256" cy="266" r="190" fill="#313244"/>
+  <!-- Short, rounded pika ears -->
+  <path d="M134 231C106 215 91 181 97 151C102 124 119 110 142 113C176 116 198 154 190 195Z" fill="#fab387"/>
+  <path d="M322 195C314 154 336 116 370 113C393 110 410 124 415 151C421 181 406 215 378 231Z" fill="#fab387"/>
+  <path d="M137 196C122 180 118 163 125 149C132 135 148 144 158 157C166 168 168 180 165 191Z" fill="#f2cdcd"/>
+  <path d="M347 191C344 180 346 168 354 157C364 144 380 135 387 149C394 163 390 180 375 196Z" fill="#f2cdcd"/>
+  <!-- Soft pear-shaped face -->
+  <path d="M256 172C180 172 132 209 114 265C104 288 96 313 101 339C110 389 174 418 256 418C338 418 402 389 411 339C416 313 408 288 398 265C380 209 332 172 256 172Z" fill="#fab387"/>
+  <!-- A small soft tuft -->
+  <path d="M216 183C222 166 235 154 253 151L251 172C266 160 279 159 292 163L280 185Z" fill="#fab387"/>
+  <!-- Cream muzzle -->
+  <path d="M256 305C235 286 210 293 194 310C169 338 188 386 256 391C324 386 343 338 318 310C302 293 277 286 256 305Z" fill="#f9e2af"/>
+  <!-- Rosy cheeks -->
+  <ellipse cx="154" cy="321" rx="25" ry="16" fill="#f2cdcd"/>
+  <ellipse cx="358" cy="321" rx="25" ry="16" fill="#f2cdcd"/>
+  <!-- Bright, kind eyes -->
+  <ellipse cx="189" cy="278" rx="16" ry="21" fill="#1e1e2e"/>
+  <ellipse cx="323" cy="278" rx="16" ry="21" fill="#1e1e2e"/>
+  <circle cx="184" cy="271" r="5" fill="#f5e0dc"/>
+  <circle cx="318" cy="271" r="5" fill="#f5e0dc"/>
+  <!-- Tiny nose and rounded smile -->
+  <path d="M243 313C243 303 269 303 269 313C269 320 261 325 256 325C251 325 243 320 243 313Z" fill="#1e1e2e"/>
+  <path d="M256 325V334M231 333C235 347 250 348 256 334C262 348 277 347 281 333" stroke="#1e1e2e" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
