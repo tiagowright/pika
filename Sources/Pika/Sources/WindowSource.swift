@@ -5,7 +5,7 @@ import CoreGraphics
 /// The primary window/title source. Uses the Accessibility API — never
 /// `kCGWindowName`, which is empty without Screen Recording permission
 /// (TECHNICAL.md §0) — supplemented by CGWindowList for z-order and
-/// on-screen filtering. Event-driven: AXObservers + NSWorkspace
+/// junk-window filtering across all Spaces. Event-driven: AXObservers + NSWorkspace
 /// notifications keep the index correct without polling, plus a
 /// debounced safety-net sweep since AX notifications aren't perfectly
 /// reliable (TECHNICAL.md §5a).
@@ -50,11 +50,15 @@ final class WindowSource {
         nc.addObserver(self, selector: #selector(appLaunched(_:)), name: NSWorkspace.didLaunchApplicationNotification, object: nil)
         nc.addObserver(self, selector: #selector(appTerminated(_:)), name: NSWorkspace.didTerminateApplicationNotification, object: nil)
         nc.addObserver(self, selector: #selector(appActivated(_:)), name: NSWorkspace.didActivateApplicationNotification, object: nil)
+        // Arriving on a Space is the only moment AX will tell us about
+        // that Space's windows, so it's the one event we can't afford to
+        // miss — it's how a never-yet-visited Space enters the cache.
+        nc.addObserver(self, selector: #selector(spaceChanged), name: NSWorkspace.activeSpaceDidChangeNotification, object: nil)
 
         for app in NSWorkspace.shared.runningApplications where app.activationPolicy == .regular {
             setup(app: app)
         }
-        rebuildNow()
+        rebuildQueue.async { [weak self] in self?.rebuildNow() } // cache is rebuildQueue-owned
         scheduleSafetyNet()
     }
 
@@ -90,6 +94,10 @@ final class WindowSource {
         if bundleID == ChromeTabSource.bundleID {
             ChromeTabSource.shared.scheduleRefresh(tier: .focusedWindow)
         }
+    }
+
+    @objc private func spaceChanged() {
+        scheduleRebuild()
     }
 
     private func setup(app: NSRunningApplication) {
@@ -167,6 +175,48 @@ final class WindowSource {
         }
     }
 
+    /// A window Pika has seen at least once through AX, remembered
+    /// across sweeps.
+    ///
+    /// This cache is the whole answer to Spaces. AX window enumeration
+    /// is **Space-scoped**: `kAXWindows` returns only the windows on the
+    /// Space you are currently looking at — and returns them with
+    /// `AXError.success`, so "you're on another Space" is
+    /// indistinguishable from "this app has no windows". Measured from
+    /// an empty Space: all 14 running apps reported success with zero
+    /// windows, which is exactly how the index ended up empty.
+    ///
+    /// CGWindowList has the opposite property — it lists every window on
+    /// every Space, but its titles need Screen Recording permission,
+    /// which TECHNICAL.md §0 deliberately avoids. So the two are split
+    /// by what each is actually good for: **CG says which windows
+    /// exist, AX says what they are called**, and this cache is what
+    /// lets those two facts be observed at different times.
+    private struct CachedWindow {
+        let cgID: CGWindowID
+        let pid: pid_t
+        let bundleID: String
+        var appName: String
+        /// Cleaned but *not* disambiguated. The " · N" suffixes are
+        /// applied at build time over the whole cached set, so they stay
+        /// consistent even on a sweep that only observed some windows.
+        var title: String
+        var ax: AXUIElement
+        var minimized: Bool
+    }
+
+    /// What one AX sweep saw for one app. Deliberately not a `Target`:
+    /// targets are built later, from the cache, so that windows nobody
+    /// could see this round still make the list.
+    private struct Observation {
+        let cgID: CGWindowID?
+        let ax: AXUIElement
+        let title: String
+        let minimized: Bool
+    }
+
+    private var windowCache: [CGWindowID: CachedWindow] = [:]
+
     /// One structural sweep. Fans out one AX call sequence per app onto
     /// that app's own serial queue (so a hung app only stalls its own
     /// rows), gated by the 150ms messaging timeout, joined with a
@@ -176,22 +226,24 @@ final class WindowSource {
         let currentApps = Array(apps.values)
         stateLock.unlock()
 
-        let onScreenIDs = onScreenWindowIDs()
+        let liveIDs = liveWindowIDs()
         let group = DispatchGroup()
         let resultsLock = NSLock()
-        var allTargets: [Target] = []
+        var observed: [(entry: AppEntry, windows: [Observation])] = []
 
         for entry in currentApps {
             group.enter()
             entry.queue.async {
-                let targets = self.windows(for: entry, onScreenIDs: onScreenIDs)
-                resultsLock.lock(); allTargets.append(contentsOf: targets); resultsLock.unlock()
+                let windows = self.observe(entry)
+                resultsLock.lock(); observed.append((entry, windows)); resultsLock.unlock()
                 group.leave()
             }
         }
         _ = group.wait(timeout: .now() + 2.0) // hard cap; slow apps simply miss this round
 
-        lastBaseTargets = allTargets
+        let targets = mergeIntoCache(observed: observed, liveIDs: liveIDs, apps: currentApps)
+
+        lastBaseTargets = targets
         publish()
         warmIconsIfNeeded(for: currentApps)
     }
@@ -212,69 +264,152 @@ final class WindowSource {
         IndexStore.shared.replace(final)
     }
 
-    private func onScreenWindowIDs() -> Set<CGWindowID> {
-        guard let list = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] else {
+    /// Every real window on every Space, by CGWindowID — the existence
+    /// half of the split described on `CachedWindow`. Not
+    /// `.optionOnScreenOnly`, which would narrow this to the current
+    /// Space and defeat the entire point.
+    private func liveWindowIDs() -> Set<CGWindowID> {
+        guard let list = CGWindowListCopyWindowInfo([.excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] else {
             return []
         }
         var ids = Set<CGWindowID>()
         for w in list {
             guard let layer = w[kCGWindowLayer as String] as? Int, layer == 0,
                   let num = w[kCGWindowNumber as String] as? CGWindowID else { continue }
+            // Zero-size junk: the on-screen option used to filter this
+            // out for free, so it has to be done explicitly now.
+            if let bounds = w[kCGWindowBounds as String] as? [String: Any],
+               let width = bounds["Width"] as? Double, let height = bounds["Height"] as? Double,
+               width < 2 || height < 2 { continue }
             ids.insert(num)
         }
         return ids
     }
 
-    private func windows(for entry: AppEntry, onScreenIDs: Set<CGWindowID>) -> [Target] {
+    /// One app's AX windows, as raw observations. An empty result is
+    /// *not* evidence the app has no windows — see `CachedWindow`.
+    private func observe(_ entry: AppEntry) -> [Observation] {
         var winsRef: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(entry.axApp, kAXWindowsAttribute as CFString, &winsRef) == .success,
-              let wins = winsRef as? [AXUIElement], !wins.isEmpty else { return [] }
+        let err = AXUIElementCopyAttributeValue(entry.axApp, kAXWindowsAttribute as CFString, &winsRef)
+        guard err == .success, let wins = winsRef as? [AXUIElement], !wins.isEmpty else { return [] }
 
-        let appName = NSRunningApplication(processIdentifier: entry.pid)?.localizedName ?? entry.bundleID
         let isGhostty = entry.bundleID == GhosttyTitle.bundleID
-
-        var rawTitles: [String] = []
-        var windows: [(ax: AXUIElement, title: String, cgID: CGWindowID?)] = []
+        var result: [Observation] = []
 
         for win in wins {
             var titleRef: CFTypeRef?
             AXUIElementCopyAttributeValue(win, kAXTitleAttribute as CFString, &titleRef)
             let rawTitle = (titleRef as? String) ?? ""
+            if rawTitle.isEmpty { continue }
             var minimizedRef: CFTypeRef?
             AXUIElementCopyAttributeValue(win, kAXMinimizedAttribute as CFString, &minimizedRef)
             let minimized = (minimizedRef as? Bool) ?? false
-            let cgID = axWindowID(win)
-            // Keep minimized windows (they're still "open"); drop windows
-            // CGWindowList can't see at all and that AX also can't ID —
-            // usually helper/panel windows, not real targets.
-            if !minimized, let cgID, !onScreenIDs.contains(cgID) { continue }
-            if rawTitle.isEmpty { continue }
+
+            // Same cap as the app element: a cached window gets probed
+            // for liveness later, and that probe must not hang a sweep.
+            AXUIElementSetMessagingTimeout(win, 0.15)
 
             let title = isGhostty ? GhosttyTitle.clean(title: rawTitle, window: win) : rawTitle
-            rawTitles.append(title)
-            windows.append((win, title, cgID))
+            result.append(Observation(cgID: axWindowID(win), ax: win, title: title, minimized: minimized))
+        }
+        return result
+    }
+
+    /// Folds this sweep's observations into the cache, evicts what no
+    /// longer exists, and builds the target list from what survives.
+    private func mergeIntoCache(
+        observed: [(entry: AppEntry, windows: [Observation])],
+        liveIDs: Set<CGWindowID>,
+        apps: [AppEntry]
+    ) -> [Target] {
+        var appNames: [pid_t: String] = [:]
+        for entry in apps {
+            appNames[entry.pid] = NSRunningApplication(processIdentifier: entry.pid)?.localizedName ?? entry.bundleID
         }
 
-        let finalTitles = isGhostty ? GhosttyTitle.disambiguate(rawTitles) : rawTitles
+        // Observed wins over cached: refresh title, minimized state and
+        // the AX handle for everything we could actually see.
+        var seenThisSweep = Set<CGWindowID>()
+        var uncacheable: [(entry: AppEntry, obs: Observation)] = []
+        for (entry, windows) in observed {
+            let appName = appNames[entry.pid] ?? entry.bundleID
+            for obs in windows {
+                guard let cgID = obs.cgID else {
+                    // No CGWindowID means nothing can vouch for this
+                    // window's existence later, so it is never cached —
+                    // it lives exactly as long as AX keeps reporting it.
+                    uncacheable.append((entry, obs))
+                    continue
+                }
+                seenThisSweep.insert(cgID)
+                windowCache[cgID] = CachedWindow(
+                    cgID: cgID, pid: entry.pid, bundleID: entry.bundleID, appName: appName,
+                    title: obs.title, ax: obs.ax, minimized: obs.minimized
+                )
+            }
+        }
 
-        return zip(windows, finalTitles).map { pair, title in
-            let (win, _, cgID) = pair
-            let id = TargetID.window(bundleID: entry.bundleID, cgWindowID: cgID, fallbackTitle: title)
-            let (bytes, appNameLen, mask) = TargetBuilder.makeHaystack(appName: appName, title: title)
-            let recency = max(
-                MRUStore.shared.lastFocusedAt(bundleID: entry.bundleID, title: title),
-                0
-            )
+        // Eviction. A window survives if CG still lists it (authoritative
+        // across all Spaces) or if AX just saw it. Minimized windows are
+        // the awkward case: they can drop out of the CG list entirely, so
+        // they get an explicit liveness probe rather than a guess.
+        let livePIDs = Set(apps.map(\.pid))
+        for (cgID, cached) in windowCache {
+            if !livePIDs.contains(cached.pid) { windowCache[cgID] = nil; continue }
+            if seenThisSweep.contains(cgID) || liveIDs.contains(cgID) { continue }
+            if cached.minimized, isStillAlive(cached.ax) { continue }
+            windowCache[cgID] = nil
+        }
+
+        var rows: [(bundleID: String, appName: String, title: String, id: TargetID, pid: pid_t, ax: AXUIElement)] = []
+        // Observed-first ordering keeps Ghostty's " · N" suffixes stable
+        // and close to stacking order; the rest sort by id so the
+        // numbering never reshuffles between sweeps.
+        let ordered = windowCache.values.sorted {
+            let aSeen = seenThisSweep.contains($0.cgID), bSeen = seenThisSweep.contains($1.cgID)
+            return aSeen == bSeen ? $0.cgID < $1.cgID : aSeen
+        }
+        for cached in ordered {
+            rows.append((cached.bundleID, cached.appName, cached.title,
+                         TargetID.window(bundleID: cached.bundleID, cgWindowID: cached.cgID, fallbackTitle: cached.title),
+                         cached.pid, cached.ax))
+        }
+        for (entry, obs) in uncacheable {
+            rows.append((entry.bundleID, appNames[entry.pid] ?? entry.bundleID, obs.title,
+                         TargetID.window(bundleID: entry.bundleID, cgWindowID: nil, fallbackTitle: obs.title),
+                         entry.pid, obs.ax))
+        }
+
+        // Ghostty disambiguation needs the full sibling set, so it runs
+        // here rather than per-app inside the sweep.
+        var titles = rows.map(\.title)
+        let ghosttyIndices = rows.indices.filter { rows[$0].bundleID == GhosttyTitle.bundleID }
+        if !ghosttyIndices.isEmpty {
+            let disambiguated = GhosttyTitle.disambiguate(ghosttyIndices.map { titles[$0] })
+            for (slot, index) in ghosttyIndices.enumerated() { titles[index] = disambiguated[slot] }
+        }
+
+        return zip(rows, titles).map { row, title in
+            let (bytes, appNameLen, mask) = TargetBuilder.makeHaystack(appName: row.appName, title: title)
             return Target(
-                id: id, kind: .window, appName: appName, bundleID: entry.bundleID, title: title,
+                id: row.id, kind: .window, appName: row.appName, bundleID: row.bundleID, title: title,
                 haystack: bytes, appNameLength: appNameLen, wordStartMask: mask,
                 letterMask: TargetBuilder.letterMask(bytes),
-                lastFocusedAt: recency,
-                icon: IconCache.shared.icon(forBundleID: entry.bundleID),
+                lastFocusedAt: max(MRUStore.shared.lastFocusedAt(bundleID: row.bundleID, title: title), 0),
+                icon: IconCache.shared.icon(forBundleID: row.bundleID),
                 stale: false,
-                handle: .window(pid: entry.pid, ax: win)
+                handle: .window(pid: row.pid, ax: row.ax)
             )
         }
+    }
+
+    /// Cheapest question AX will answer about a window element. A
+    /// destroyed window reports `.invalidUIElement`; anything else
+    /// (including a timeout) is treated as still alive, because an
+    /// unresponsive app is not evidence its windows are gone.
+    private func isStillAlive(_ window: AXUIElement) -> Bool {
+        var roleRef: CFTypeRef?
+        return AXUIElementCopyAttributeValue(window, kAXRoleAttribute as CFString, &roleRef) != .invalidUIElement
     }
 
     private func warmIconsIfNeeded(for apps: [AppEntry]) {
