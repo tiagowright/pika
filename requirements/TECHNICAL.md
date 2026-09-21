@@ -28,7 +28,7 @@ I measured the risky operations on this machine (macOS 26.6.2, 16 foreground app
 
 **Three conclusions fall out of this table:**
 
-1. **We can avoid Screen Recording permission entirely.** Titles come from the Accessibility API, which we need anyway to raise windows. `CGWindowList` is still used for z-order, window IDs, and on-screen filtering — all of which work without the permission. Asking for one scary permission instead of two is a real product win.
+1. **We can avoid Screen Recording permission entirely.** Titles come from the Accessibility API, which we need anyway to raise windows. `CGWindowList` is still used for z-order, window IDs, window *existence across Spaces* (§5d), and junk filtering — all of which work without the permission. Asking for one scary permission instead of two is a real product win. The cost is paid in §5d: AX titles are Space-scoped, so titles for windows on other Spaces are as of the last visit.
 2. **Nothing may be enumerated after the hotkey fires.** Not AX, not AppleScript. The answer must already be in memory.
 3. **Icons cost nothing if pre-rasterized.** The 323ms is a one-time startup cost on a background queue.
 
@@ -155,7 +155,9 @@ Three non-obvious requirements:
 
 ### 5b. Windows — `CGWindowListCopyWindowInfo` (supplement)
 
-Fast (≈2ms warm) and gives what AX doesn't: **z-order**, `kCGWindowNumber`, on-screen state, and bounds. Used to filter out off-screen/zero-size junk windows and to seed initial MRU order from z-order at startup.
+Fast (≈2ms warm) and gives what AX doesn't: **z-order**, `kCGWindowNumber`, on-screen state, bounds, and — critically — **windows on every Space** (§5d). Used to filter out zero-size junk windows, to decide which windows still exist, and to seed initial MRU order from z-order at startup.
+
+Note the option flags: `.optionOnScreenOnly` narrows the list to the Space you are currently looking at. We deliberately do not pass it.
 
 Correlating a `CGWindowID` with an `AXUIElement` requires the private-but-ubiquitous:
 
@@ -165,6 +167,39 @@ func _AXUIElementGetWindow(_ element: AXUIElement, _ out: UnsafeMutablePointer<C
 ```
 
 Every serious macOS window manager (yabai, AeroSpace, Rectangle) uses this. It has been stable for a decade but is unsupported — wrap it, feature-detect it, and degrade to title+pid matching if it ever fails. See Risks.
+
+### 5d. Spaces — why the window cache exists
+
+**Measured, not assumed: AX window enumeration is Space-scoped.**
+`kAXWindowsAttribute` returns only the windows on the Space you are
+currently looking at, and returns them with `AXError.success` — so
+"you are standing on a different Space" is indistinguishable from
+"this app has no windows". Swept from an empty Space, all 14 running
+apps reported success with zero windows, and the index went empty.
+
+`CGWindowListCopyWindowInfo` has the exact opposite property: it sees
+every Space, but its titles need Screen Recording, which §0 exists to
+avoid. So the two are split by what each is actually good for:
+
+| Question | Source |
+|---|---|
+| Which windows exist? | `CGWindowList`, all Spaces, no permission |
+| What is this window called? | AX, current Space only |
+| How do I raise it? | A retained `AXUIElement`, valid across Spaces |
+
+`WindowSource.windowCache` is what lets those facts be observed at
+different times: keyed by `CGWindowID`, written whenever AX can see a
+window, evicted when CG stops listing it (or, for minimised windows,
+which can drop out of the CG list, when an `AXRole` probe returns
+`.invalidUIElement`). An empty AX sweep is never treated as evidence
+that windows went away.
+
+Two consequences, both inherent:
+
+- **A Space must be visited once per launch** before its windows are
+  known. `NSWorkspace.activeSpaceDidChangeNotification` triggers an
+  immediate sweep on arrival, so one visit suffices.
+- **Titles for windows on other Spaces are as of the last visit.**
 
 ### 5c. Chrome tabs
 
@@ -447,5 +482,5 @@ M1 first, before any data work: if the empty panel can't show in 16ms, nothing e
 
 1. **Distribution** — local `swift build` only, or signed + notarized? This matters more than it sounds: the Accessibility grant is keyed to the code signature, so an unsigned app re-prompts on every rebuild. Recommend an ad-hoc-stable or Developer ID signature from M1 onward purely to keep development sane.
 2. **Multi-monitor** — panel on the screen with the mouse (my assumption) or the screen with the focused window?
-3. **Spaces** — raising a window on another Space switches Spaces (my assumption, matches macOS default), or should it pull the window to the current Space?
+3. ~~**Spaces** — raising a window on another Space switches Spaces (my assumption, matches macOS default), or should it pull the window to the current Space?~~ **Resolved:** raise switches Spaces, and that is the behaviour we keep. It needs `kAXMainAttribute` set before the raise and a second raise after `activate()`, or apps that restore their own front window win the race. Enumerating those windows in the first place needed §5d.
 4. **Ghostty tab titles** — they currently read as the running command (`kiro-cli chat --model …`) or the cwd. Worth a Ghostty-specific title rewrite (e.g. prefer the cwd basename) to make them fuzzy-match better, or leave raw?

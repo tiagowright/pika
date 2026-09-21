@@ -22,11 +22,24 @@ enum Activation {
     }
 
     private static func raiseAndActivate(pid: pid_t, ax: AXUIElement) {
-        DispatchQueue(label: "pika.activate").async {
+        let queue = DispatchQueue(label: "pika.activate")
+        queue.async {
             AXUIElementSetAttributeValue(ax, kAXMinimizedAttribute as CFString, false as CFTypeRef)
+            // Main *before* raise: activation follows the app's main
+            // window, so if the target lives on another Space this is
+            // what makes macOS switch Spaces rather than surfacing
+            // whatever the app happens to have on the current one.
+            AXUIElementSetAttributeValue(ax, kAXMainAttribute as CFString, true as CFTypeRef)
             AXUIElementPerformAction(ax, kAXRaiseAction as CFString)
             DispatchQueue.main.async {
                 NSRunningApplication(processIdentifier: pid)?.activate(options: [])
+                // One more raise once the app owns the foreground. Apps
+                // that restore their own front window on activation
+                // would otherwise beat us back to the wrong Space; a
+                // repeat raise on an already-front window is a no-op.
+                queue.asyncAfter(deadline: .now() + 0.05) {
+                    AXUIElementPerformAction(ax, kAXRaiseAction as CFString)
+                }
             }
         }
     }
