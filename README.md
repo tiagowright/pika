@@ -1,23 +1,27 @@
 # Pika
 
-Pika is a very fast macOS window and app switcher. It is inspired by modern
-editors fast and fuzzy file switching experiences. The app is architected
-to respond instantly even with tons open apps, search at the speed of typing, and
-switch immediately. Pika lists every open window across every Space, and even individual tabs
+Pika is a blazing fast, keyboard-driven, window and app switcher for macOS.
+
+TK: screenshots
+
+Pika is inspired by modern editors fast and fuzzy file switching experiences. 
+The app is built from the ground up to respond instantly even with tons open apps, 
+search at the speed of typing, and switch immediately. Pika lists every open
+window across every Space, and even individual tabs
 inside many apps (including Chrome tabs and Ghostty). Type a
-couple of characters, press Enter, and that window is in front of you. It is keyboard driven:
+couple of characters, press Enter, and that window is in front of you. 
+
+It is keyboard driven:
 `Ctrl+Space` brings up the switcher, which allows you to search for
-the window using a few letters and fuzzy matching, then `Enter` to switch.
-
-Examples:
-- `Ctrl+Space` then `zp` finds `Zed · pika — ARCHITECTURE.md`, because both 
-characters landed on word beginnings. `Enter` then switches to that window.
-- `Ctrl+Space` then `gcdr` finds `Google Chrome · Home - Google Drive`
-- `Ctrl+Space` then `Enter` brings you back to the last window you were.
-
-## Screenshots
-
-To be added. `TK`
+the window using a few letters and fuzzy matching, then `Enter` to switch. 
+Examples, `Ctrl+Space` followed by...
+- `zp` finds `Zed · pika — ARCHITECTURE.md`, because both 
+characters landed on word beginnings.
+- `fp` finds `Finder · pika`
+- `ghpi` finds `Ghostty · pika/`
+- `gcpi` finds `Google Chrome · pika/README.md at main`
+- `gcdr` finds `Google Chrome · Home - Google Drive`
+- `Enter` brings you back to the last window you were.
 
 ## Blazing fast
 
@@ -44,11 +48,10 @@ matches. Every interaction is designed to respond in milliseconds.
 
 Spaces mean AND: `z pika` requires both tokens to match, in any order.
 
-### The `Ctrl+Space` collision
-
-macOS binds `Ctrl+Space` to **Select the previous input source**. If the
-panel doesn't appear, that's almost certainly why. Clear it in **System
-Settings → Keyboard → Keyboard Shortcuts → Input Sources**, or pick a
+**The `Ctrl+Space` collision:** macOS binds `Ctrl+Space` to 
+*Select the previous input source*. If the
+panel doesn't appear, that's almost certainly why. Clear it in *System
+Settings → Keyboard → Keyboard Shortcuts → Input Sources*, or pick a
 different hotkey in the config file.
 
 ## Privacy
@@ -204,8 +207,8 @@ MIT — see [LICENSE](LICENSE).
 Bundled third-party work, with full notices in
 [THIRD-PARTY.md](THIRD-PARTY.md):
 
-- **JetBrains Mono** under the SIL Open Font License 1.1. The licence text
-  sits beside the font at
+**JetBrains Mono** under the SIL Open Font License 1.1. The licence text sits beside the font at
   [`Sources/Pika/Resources/JetBrainsMono-OFL.txt`](Sources/Pika/Resources/JetBrainsMono-OFL.txt)
   and is copied into the `.app` bundle, as the OFL requires.
-- **Catppuccin** (MIT) for the Mocha palette in `Theme.swift`.
+  
+**Catppuccin** (MIT) for the color palette in `Theme.swift`.

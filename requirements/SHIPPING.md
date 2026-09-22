@@ -25,11 +25,10 @@ background agent, it asks for Accessibility — the most powerful
 permission macOS grants — it reads every window title on the machine and
 every Chrome tab title and URL, it registers itself to launch at login,
 and it currently offers no way to quit or uninstall it. Each of those is
-defensible. None of them is currently *disclosed*, and a public repo
-turns each one into a reason for someone to close the tab.
+defensible.
 
 The other half of the list is mechanical: the repo does not build for
-anyone but you.
+anyone else yet.
 
 ---
 
