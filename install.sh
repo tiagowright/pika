@@ -66,5 +66,12 @@ sleep 0.3
 rm -rf "$DEST"
 cp -R "Pika.app" "$DEST"
 
+# Leaving the build output in place would mean two bundles on the machine
+# claiming the same CFBundleIdentifier. macOS resolves an identifier back
+# to a path through Launch Services to draw the Privacy & Security rows, so
+# a second candidate makes Pika impossible to add to Accessibility: the row
+# just never appears. Delete the intermediate now that it is installed.
+rm -rf "Pika.app"
+
 open "$DEST"
 echo "Installed and launched $DEST ($CONFIG)"

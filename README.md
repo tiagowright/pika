@@ -40,6 +40,14 @@ quits a running Pika and replaces `/Applications/Pika.app`. Pass `--yes` to
 skip the prompt in a script. `./build.sh` on its own produces `Pika.app` in
 the project directory without installing anything.
 
+> **Don't leave a built `Pika.app` in the project directory while another
+> copy is installed in `/Applications`.** Two bundles claiming the same
+> `CFBundleIdentifier` make the app impossible to add to Accessibility —
+> macOS resolves an identifier back to a path to draw those rows, and with
+> two candidates the row silently never appears. `install.sh` deletes the
+> intermediate for you; if you've been using `build.sh` directly, run
+> `rm -rf Pika.app` before granting permissions.
+
 Installing to `/Applications` is deliberate, not cosmetic: `SMAppService`
 ties the login-item registration to the bundle's location on disk, so a Pika
 run out of a project directory loses "launch at login" the moment that
