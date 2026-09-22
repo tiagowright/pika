@@ -11,9 +11,7 @@ landed on word beginnings. That's the whole interaction.
 
 ## Status
 
-v0.1, a personal project published in case it's useful. It has only ever run
-on **macOS 26.6 on Apple Silicon**, which is why it claims exactly that and
-no more. Support is best-effort. There is no notarized download yet — you
+This is still a work in progress. There is no notarized download yet — you
 build it yourself.
 
 `requirements/` holds the design documents: `UX.md` (product), `TECHNICAL.md`
@@ -21,9 +19,7 @@ build it yourself.
 
 ## Requirements
 
-- **macOS 26 or later.** `LSMinimumSystemVersion` is set to `26.0` because
-  that's the only floor that's been tested, rather than a lower number that
-  looks more generous and might not work.
+- **macOS 26 or later.** Not yet tested on earlier versions
 - **Apple Silicon.**
 - **Swift 6.4.** Full Xcode is *not* required — Command Line Tools is enough.
 
@@ -48,7 +44,7 @@ the project directory without installing anything.
 > intermediate for you; if you've been using `build.sh` directly, run
 > `rm -rf Pika.app` before granting permissions.
 
-Installing to `/Applications` is deliberate, not cosmetic: `SMAppService`
+Installing to `/Applications` is deliberate: `SMAppService`
 ties the login-item registration to the bundle's location on disk, so a Pika
 run out of a project directory loses "launch at login" the moment that
 directory moves.
