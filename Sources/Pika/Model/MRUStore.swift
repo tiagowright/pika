@@ -62,11 +62,11 @@ final class MRUStore {
 enum AppPaths {
     static var supportDirectory: URL {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("dev.pika", isDirectory: true)
+            .appendingPathComponent("io.github.tiagowright.pika", isDirectory: true)
     }
     static var cacheDirectory: URL {
         FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("dev.pika", isDirectory: true)
+            .appendingPathComponent("io.github.tiagowright.pika", isDirectory: true)
     }
     static var configDirectory: URL {
         FileManager.default.homeDirectoryForCurrentUser

@@ -178,7 +178,7 @@ Catppuccin Mocha as the shipped default. Every colour is a named token so a conf
 | `sel_bg` | `#313244` surface0 | Selected row background |
 | `warn` | `#f9e2af` yellow | Degraded-source indicator |
 
-> Verify hexes against `catppuccin/catppuccin` before shipping — these are from memory.
+> Verified against `catppuccin/palette` on 2026-09-21: all ten values match Mocha exactly.
 
 Config sketch (`~/.config/pika/config.toml`):
 

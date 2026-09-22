@@ -425,5 +425,5 @@ final class WindowSource {
 }
 
 enum PikaApp {
-    static let bundleID = Bundle.main.bundleIdentifier ?? "dev.pika"
+    static let bundleID = Bundle.main.bundleIdentifier ?? "io.github.tiagowright.pika"
 }

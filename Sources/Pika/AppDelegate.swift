@@ -3,7 +3,7 @@ import ApplicationServices
 import ServiceManagement
 import os
 
-private let log = Logger(subsystem: "dev.pika", category: "launch")
+private let log = Logger(subsystem: "io.github.tiagowright.pika", category: "launch")
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let hotKeyManager = HotKeyManager()

@@ -1,6 +1,6 @@
 # Pika — Technical Implementation Outline
 
-Target: macOS 26 (Tahoe), Apple Silicon. Swift 6.3. Companion to `UX.md`.
+Target: macOS 26 (Tahoe), Apple Silicon. Swift 6.4. Companion to `UX.md`.
 
 ---
 
@@ -263,7 +263,7 @@ Measured: 80ms to fetch + **323ms to rasterize** 16 icons — and then **0ms for
 At launch, on a background queue:
 1. `NSRunningApplication.icon` (or `NSWorkspace.icon(forFile: bundleURL.path)`).
 2. Draw once into a `CGImage` at the exact display size × backing scale (32×32 @2x).
-3. Cache in memory keyed by bundle identifier, and write to `~/Library/Caches/dev.pika/icons/<bundleid>@2x.png` so restarts are near-instant.
+3. Cache in memory keyed by bundle identifier, and write to `~/Library/Caches/io.github.tiagowright.pika/icons/<bundleid>@2x.png` so restarts are near-instant.
 4. New apps rasterize lazily in the background; rows render with a placeholder glyph until ready.
 
 Drawing a pre-rasterized `CGImage` into a row is a single blit. **Icons are free. Ship them.**
@@ -330,7 +330,7 @@ That table is what makes `zp` → *Zed / pika* work: `z` scores +120 (app-name s
 
 ### Learned selections (confirmed for v1)
 
-Persist `(normalized query → target key) → count` in `~/Library/Application Support/dev.pika/learned.json`.
+Persist `(normalized query → target key) → count` in `~/Library/Application Support/io.github.tiagowright.pika/learned.json`.
 
 - **Target key** must survive restarts and title changes, so it is `(bundleID, windowIndexWithinApp)` for windows and `(bundleID, url)` for tabs — never a `CGWindowID`.
 - On each query, look up the exact query and each of its prefixes; add `learn_weight × log2(1 + count)`, capped so a single stale learned entry can't outrank a strong fresh match.
@@ -345,7 +345,7 @@ Persist `(normalized query → target key) → count` in `~/Library/Application 
 - A monotonic counter; each window records `lastFocusedAt`.
 - Updated on `NSWorkspace.didActivateApplication` (app level) and `kAXFocusedWindowChangedNotification` (window level).
 - **Pika's own PID is excluded** — the panel taking key focus must never perturb the stack.
-- Persisted to `~/Library/Application Support/dev.pika/mru.json` on a debounce so ordering survives a restart; entries are matched back by `(bundleID, title)` since `CGWindowID`s don't survive.
+- Persisted to `~/Library/Application Support/io.github.tiagowright.pika/mru.json` on a debounce so ordering survives a restart; entries are matched back by `(bundleID, title)` since `CGWindowID`s don't survive.
 - **Decided:** the empty-query list is MRU with the current window **omitted entirely** — not dimmed, not last. So `list[0]` is unambiguously the previous window, and there is no row whose selection is a no-op. The current window reappears in the list as soon as a query is typed (it can still be a legitimate fuzzy match).
 
 ---

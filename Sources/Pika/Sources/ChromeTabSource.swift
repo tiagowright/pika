@@ -1,7 +1,7 @@
 import AppKit
 import os
 
-private let log = Logger(subsystem: "dev.pika", category: "chrome")
+private let log = Logger(subsystem: "io.github.tiagowright.pika", category: "chrome")
 
 /// Chrome tab titles, as a background-only refinement layer over the
 /// window-level rows WindowSource already produces.

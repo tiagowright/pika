@@ -9,3 +9,6 @@ Pika.app/
 AppIcon.iconset/
 
 .DS_Store
+
+# Local code-signing identity — per machine, never committed
+.signing-identity
