@@ -1,37 +1,44 @@
 # Pika
 
-Pika is a blazing fast, keyboard-driven, window and app switcher for macOS.
+Pika is a blazing-fast, keyboard-first window finder for macOS.
 
 TK: screenshots
 
-Pika is inspired by modern editors fast and fuzzy file switching experiences. 
-The app is built from the ground up to respond instantly even with tons open apps, 
-search at the speed of typing, and switch immediately. Pika lists every open
-window across every Space, and even individual tabs
-inside many apps (including Chrome tabs and Ghostty). Type a
-couple of characters, press Enter, and that window is in front of you. 
+Pika brings the fast, fuzzy **Command-P** file-switching pattern from editors
+such as Zed and VS Code to the windows you already have open. Press a hotkey,
+type a couple of letters from an app or window title, then press `Enter` to
+jump to that exact window. Pika lists open windows across Spaces and, when
+enabled, individual Chrome tabs. Ghostty's native tabs appear as windows.
+
+**Local by design.** Pika reads window titles through macOS Accessibility so
+it can find and raise the window you choose. It sends nothing over the network;
+the local data it stores—including the sensitive parts—is described in
+[Privacy and local data](#privacy-and-local-data).
 
 It is keyboard driven:
 `Ctrl+Space` brings up the switcher, which allows you to search for
 the window using a few letters and fuzzy matching, then `Enter` to switch. 
-Examples, `Ctrl+Space` followed by...
-- `zp` finds `Zed · pika — ARCHITECTURE.md`, because both 
+For example, after `Ctrl+Space`:
+- `zp` finds the window `Zed · pika — README.md`, because both
 characters landed on word beginnings.
-- `fp` finds `Finder · pika`
-- `ghpi` finds `Ghostty · pika/`
-- `gcpi` finds `Google Chrome · pika/README.md at main`
-- `gcdr` finds `Google Chrome · Home - Google Drive`
+- `fp` finds the window `Finder · pika`
+- `ghpi` finds the tab `Ghostty · pika/`
+- `gcpi` finds the tab `Google Chrome · pika/README.md at main`
 - `Enter` brings you back to the last window you were.
 
 ## Blazing fast
 
-Pika was architected to reduce switching latency as much as possible.
-To achieve this, open apps, windows, and tabs are indexed in a separate
-process independent of the user interface. Indexing is event driven, to
-reduce resources. When the user calls up the switcher with `Ctrl+Space`,
-the index is read from the file and fuzzy search happens quickly in memory,
-fast enough that every key press responds immediately with updated
-matches. Every interaction is designed to respond in milliseconds.
+Pika was architected to make window switching feel as immediate as editor file
+switching. Open apps, windows, and Chrome tabs are indexed off the UI path and
+updated in the background. When the switcher opens, it searches an in-memory
+snapshot—never waiting for Accessibility or Chrome—so each keystroke can update
+the matches immediately.
+
+| Interaction | Average response |
+|---|---:|
+| Hotkey → visible switcher | `TK ms` |
+| Keystroke → updated results | `TK ms` |
+| `Enter` → switcher dismissed | `TK ms` |
 
 ## Keys
 
@@ -54,14 +61,6 @@ panel doesn't appear, that's almost certainly why. Clear it in *System
 Settings → Keyboard → Keyboard Shortcuts → Input Sources*, or pick a
 different hotkey in the config file.
 
-## Privacy
-
-Pika runs locally on your machine and never communicates over the network.
-The app does save the live index of open windows on a file in your drive,
-so that the app can respond instantly to every request. This file is placed
-`TK`, and it is secured by the standard encryption that your MacOS
-provides for all your personal data.
-
 ## Permissions
 
 | Permission | Required? | What happens |
@@ -69,6 +68,36 @@ provides for all your personal data.
 | **Accessibility** | Yes | Reads window titles and raises windows. Pika prompts on first launch, then polls once a second and starts itself the moment you grant it — no relaunch needed. |
 | **Automation → Google Chrome** | Optional | Lets Pika list individual Chrome *tabs*. Denied, you get one row per Chrome *window* instead, permanently and without complaint. |
 | **Screen Recording** | Never asked | Titles come from the Accessibility API precisely so this second scary prompt isn't needed. |
+
+## Privacy and local data
+
+Pika makes **no network connections** and has no telemetry, analytics, or crash
+reporting. The window index used while you search is held in memory; Pika does
+persist a small amount of local state so it can remember recency and learned
+ranking.
+
+Accessibility lets Pika read the title of every open window and raise the one
+you select. If you grant **Automation → Google Chrome**, Pika also reads Chrome
+tab titles and URLs to list individual tabs. Screen Recording and Input
+Monitoring are deliberately not requested.
+
+| Path | Contents |
+|---|---|
+| `~/.config/pika/config.toml` | Your settings |
+| `~/Library/Application Support/io.github.tiagowright.pika/mru.json` | Recency data, including window titles and full Chrome tab URLs |
+| `~/Library/Application Support/io.github.tiagowright.pika/learned.json` | Every query you type and the target you chose |
+| `~/Library/Caches/io.github.tiagowright.pika/icons/` | App icons as PNGs, named by bundle ID |
+
+**Read these before sharing them.** Chrome URLs can include query strings,
+session tokens, document IDs, or search terms. `learned.json` links each typed
+query to the target you selected, and icon filenames reveal which apps you run.
+These files are plain local JSON; Pika does not add its own encryption.
+
+In the current development build, window titles may also appear in the macOS
+unified log. Do not attach Pika logs to a bug report without reviewing them.
+
+To reset learned ranking, delete `learned.json`. There is no `--forget` flag
+yet. To remove all local data, use the uninstall instructions below.
 
 ## Build and install
 
@@ -84,36 +113,15 @@ cd pika
 
 `install.sh` builds, tells you what it's about to do, and asks before it
 quits a running Pika and replaces `/Applications/Pika.app`. 
-Installing to `/Applications` is deliberate to enable launch at login
-and providing the necessary Accessibility permissions.
+Installing to `/Applications` gives Pika a stable app location for Accessibility
+permissions. The current development build also registers a login item, so
+Pika is available immediately after a login.
 
-## Code signing — read this if Pika stops working after a rebuild
+## Rebuilding Pika
 
-macOS keys the Accessibility permission to the app's **code signature**. An
-ad-hoc signature is different on every build, so an ad-hoc Pika loses its
-permission every time you rebuild and then silently stops raising windows,
-with no error anywhere.
-
-`build.sh` picks a signing identity, first match wins:
-
-1. `$PIKA_SIGN_IDENTITY`
-2. `.signing-identity` — a one-line file in the project root, gitignored
-3. A `Developer ID Application` certificate in your keychain
-4. Ad-hoc, with a warning explaining the above
-
-For comfortable local development, make a stable identity once:
-
-**Keychain Access → Certificate Assistant → Create a Certificate…** → any
-name, Identity Type **Self Signed Root**, Certificate Type **Code Signing**.
-Then:
-
-```sh
-echo "My Local Signing" > .signing-identity
-```
-
-The first build with a new key raises a keychain prompt. Choose **"Always
-Allow"** — with plain "Allow" every subsequent build blocks on the same
-dialog.
+If Pika stops raising windows after a rebuild, its Accessibility permission may
+have changed with its code signature. See [code-signing guidance](CODE_SIGNING.md)
+for the cause and a stable local-development setup.
 
 ## Configuration
 
@@ -146,28 +154,6 @@ The current file also contains `theme` and `font` keys. **Those are not
 read yet** — the theme is fixed to Catppuccin Mocha and the font to the
 bundled JetBrains Mono. They're written as placeholders; editing them does
 nothing today.
-
-## What Pika stores, and where
-
-Pika makes **no network connections** and has no telemetry, analytics, or
-crash reporting of any kind. Everything below stays on your machine.
-
-| Path | Contents |
-|---|---|
-| `~/.config/pika/config.toml` | Your settings |
-| `~/Library/Application Support/io.github.tiagowright.pika/mru.json` | Recency per target |
-| `~/Library/Application Support/io.github.tiagowright.pika/learned.json` | Which target you pick for a given query |
-| `~/Library/Caches/io.github.tiagowright.pika/icons/` | App icons as PNGs, named by bundle ID |
-
-**Worth knowing before you share any of these.** A tab's stable identity
-*is* its URL, so `mru.json` contains **full Chrome tab URLs including query
-strings**, alongside window titles. `learned.json` contains every query
-you've typed and what it resolved to. The icon filenames alone list the apps
-you run. It's all plain JSON owned by your user, so read these before
-attaching them to a bug report.
-
-To reset learned ranking, delete `learned.json`. There's no `--forget` flag
-yet.
 
 ## Uninstall
 
