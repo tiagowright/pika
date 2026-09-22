@@ -1,29 +1,77 @@
 # Pika
 
-A macOS window switcher. **`Ctrl+Space`, two or three letters, `Enter`.**
+Pika is a very fast macOS window and app switcher. It is inspired by modern
+editors fast and fuzzy file switching experiences. The app is architected
+to respond instantly even with tons open apps, search at the speed of typing, and
+switch immediately. Pika lists every open window across every Space, and even individual tabs
+inside many apps (including Chrome tabs and Ghostty). Type a
+couple of characters, press Enter, and that window is in front of you. It is keyboard driven:
+`Ctrl+Space` brings up the switcher, which allows you to search for
+the window using a few letters and fuzzy matching, then `Enter` to switch.
 
-Pika lists every open window across every Space, every Chrome tab, and every
-running app that has no windows — as one flat, fuzzy-searchable list. Type a
-couple of characters, press Enter, and that window is in front of you.
+Examples:
+- `Ctrl+Space` then `zp` finds `Zed · pika — ARCHITECTURE.md`, because both 
+characters landed on word beginnings. `Enter` then switches to that window.
+- `Ctrl+Space` then `gcdr` finds `Google Chrome · Home - Google Drive`
+- `Ctrl+Space` then `Enter` brings you back to the last window you were.
 
-Typing `zp` finds `Zed · pika — ARCHITECTURE.md`, because both characters
-landed on word beginnings. That's the whole interaction.
+## Screenshots
 
-## Status
+To be added. `TK`
 
-This is still a work in progress. There is no notarized download yet — you
-build it yourself.
+## Blazing fast
 
-`requirements/` holds the design documents: `UX.md` (product), `TECHNICAL.md`
-(implementation), `SHIPPING.md` (an honest list of what this still needs).
+Pika was architected to reduce switching latency as much as possible.
+To achieve this, open apps, windows, and tabs are indexed in a separate
+process independent of the user interface. Indexing is event driven, to
+reduce resources. When the user calls up the switcher with `Ctrl+Space`,
+the index is read from the file and fuzzy search happens quickly in memory,
+fast enough that every key press responds immediately with updated
+matches. Every interaction is designed to respond in milliseconds.
 
-## Requirements
+## Keys
 
-- **macOS 26 or later.** Not yet tested on earlier versions
-- **Apple Silicon.**
-- **Swift 6.4.** Full Xcode is *not* required — Command Line Tools is enough.
+| Key | Action |
+|---|---|
+| `Ctrl+Space` | Toggle — opens if hidden, closes if already open |
+| `Esc` | Dismiss, clear the query |
+| `Enter` | Activate the selected row |
+| `↓` / `Ctrl+N` | Next row (stops at the end, no wrap) |
+| `↑` / `Ctrl+P` | Previous row (stops at the top) |
+| `Ctrl+W` | Delete the previous word |
+| `Ctrl+U` | Clear the query |
+| `Backspace` | Delete a character |
+
+Spaces mean AND: `z pika` requires both tokens to match, in any order.
+
+### The `Ctrl+Space` collision
+
+macOS binds `Ctrl+Space` to **Select the previous input source**. If the
+panel doesn't appear, that's almost certainly why. Clear it in **System
+Settings → Keyboard → Keyboard Shortcuts → Input Sources**, or pick a
+different hotkey in the config file.
+
+## Privacy
+
+Pika runs locally on your machine and never communicates over the network.
+The app does save the live index of open windows on a file in your drive,
+so that the app can respond instantly to every request. This file is placed
+`TK`, and it is secured by the standard encryption that your MacOS
+provides for all your personal data.
+
+## Permissions
+
+| Permission | Required? | What happens |
+|---|---|---|
+| **Accessibility** | Yes | Reads window titles and raises windows. Pika prompts on first launch, then polls once a second and starts itself the moment you grant it — no relaunch needed. |
+| **Automation → Google Chrome** | Optional | Lets Pika list individual Chrome *tabs*. Denied, you get one row per Chrome *window* instead, permanently and without complaint. |
+| **Screen Recording** | Never asked | Titles come from the Accessibility API precisely so this second scary prompt isn't needed. |
 
 ## Build and install
+
+No downloadable installers available yet. The app is currently for those
+ready to install from github. Tested on macOS 26, Apple Silicon, with 
+Swift 6.4 (command line tools is enough).
 
 ```sh
 git clone https://github.com/tiagowright/pika.git
@@ -32,22 +80,9 @@ cd pika
 ```
 
 `install.sh` builds, tells you what it's about to do, and asks before it
-quits a running Pika and replaces `/Applications/Pika.app`. Pass `--yes` to
-skip the prompt in a script. `./build.sh` on its own produces `Pika.app` in
-the project directory without installing anything.
-
-> **Don't leave a built `Pika.app` in the project directory while another
-> copy is installed in `/Applications`.** Two bundles claiming the same
-> `CFBundleIdentifier` make the app impossible to add to Accessibility —
-> macOS resolves an identifier back to a path to draw those rows, and with
-> two candidates the row silently never appears. `install.sh` deletes the
-> intermediate for you; if you've been using `build.sh` directly, run
-> `rm -rf Pika.app` before granting permissions.
-
-Installing to `/Applications` is deliberate: `SMAppService`
-ties the login-item registration to the bundle's location on disk, so a Pika
-run out of a project directory loses "launch at login" the moment that
-directory moves.
+quits a running Pika and replaces `/Applications/Pika.app`. 
+Installing to `/Applications` is deliberate to enable launch at login
+and providing the necessary Accessibility permissions.
 
 ## Code signing — read this if Pika stops working after a rebuild
 
@@ -77,36 +112,6 @@ The first build with a new key raises a keychain prompt. Choose **"Always
 Allow"** — with plain "Allow" every subsequent build blocks on the same
 dialog.
 
-## Permissions
-
-| Permission | Required? | What happens |
-|---|---|---|
-| **Accessibility** | Yes | Reads window titles and raises windows. Pika prompts on first launch, then polls once a second and starts itself the moment you grant it — no relaunch needed. |
-| **Automation → Google Chrome** | Optional | Lets Pika list individual Chrome *tabs*. Denied, you get one row per Chrome *window* instead, permanently and without complaint. |
-| **Screen Recording** | Never asked | Titles come from the Accessibility API precisely so this second scary prompt isn't needed. |
-
-## Keys
-
-| Key | Action |
-|---|---|
-| `Ctrl+Space` | Toggle — opens if hidden, closes if already open |
-| `Esc` | Dismiss, clear the query |
-| `Enter` | Activate the selected row |
-| `↓` / `Ctrl+N` | Next row (stops at the end, no wrap) |
-| `↑` / `Ctrl+P` | Previous row (stops at the top) |
-| `Ctrl+W` | Delete the previous word |
-| `Ctrl+U` | Clear the query |
-| `Backspace` | Delete a character |
-
-Spaces mean AND: `z pika` requires both tokens to match, in any order.
-
-### The `Ctrl+Space` collision
-
-macOS binds `Ctrl+Space` to **Select the previous input source**. If the
-panel doesn't appear, that's almost certainly why. Clear it in **System
-Settings → Keyboard → Keyboard Shortcuts → Input Sources**, or pick a
-different hotkey in the config file.
-
 ## Configuration
 
 `~/.config/pika/config.toml`, created with defaults on first launch. Read at
@@ -134,7 +139,7 @@ include_current = false      # list the window you're already in
 chrome_tabs = true
 ```
 
-The generated file also contains `theme` and `font` keys. **Those are not
+The current file also contains `theme` and `font` keys. **Those are not
 read yet** — the theme is fixed to Catppuccin Mocha and the font to the
 bundled JetBrains Mono. They're written as placeholders; editing them does
 nothing today.
@@ -159,7 +164,7 @@ you run. It's all plain JSON owned by your user, so read these before
 attaching them to a bug report.
 
 To reset learned ranking, delete `learned.json`. There's no `--forget` flag
-yet, despite what `UX.md` §6 promises.
+yet.
 
 ## Uninstall
 
