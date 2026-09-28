@@ -3,7 +3,7 @@ import CoreText
 
 /// Catppuccin Mocha, as named tokens per UX.md §7 so a config file can
 /// swap the whole palette without touching drawing code.
-struct Theme {
+struct Theme: Equatable {
     var bg: NSColor
     var bgInput: NSColor
     var border: NSColor

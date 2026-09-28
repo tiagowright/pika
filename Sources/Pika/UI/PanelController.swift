@@ -21,13 +21,11 @@ final class PanelController {
 
     private var panel: NSPanel!
     private var view: PikaView!
-    private let config: Config
+    private var config: Config { ConfigStore.shared.config }
 
     private(set) var isVisible = false
 
-    private init() {
-        config = Config.loadOrCreateDefault()
-    }
+    private init() {}
 
     func prewarm() {
         PikaFont.registerBundled()
@@ -65,11 +63,25 @@ final class PanelController {
         panel.orderOut(nil)
 
         WindowSource.shared.start()
-        if config.chromeTabs {
-            ChromeTabSource.shared.scheduleRefresh(tier: .focusedWindow, delay: 0.3)
-            ChromeTabSource.shared.scheduleRefresh(tier: .allWindows, delay: 1.0)
-        }
+        ChromeTabSource.shared.setEnabled(config.chromeTabs)
         LearnedStore.shared.decayAll()
+
+        ConfigStore.shared.observe { [weak self] old, new in self?.apply(old: old, new: new) }
+    }
+
+    /// Applies a changed config to the live, prewarmed panel. The panel is
+    /// never rebuilt for this (TECHNICAL.md §9: a cold panel costs ~150ms
+    /// to show).
+    private func apply(old: Config, new: Config) {
+        view.config = new
+        view.layer?.borderColor = new.theme.border.cgColor
+        if new.chromeTabs != old.chromeTabs {
+            ChromeTabSource.shared.setEnabled(new.chromeTabs)
+        }
+        if isVisible {
+            view.refresh()
+            layout()
+        }
     }
 
     func toggle() {

@@ -1,5 +1,8 @@
 import Carbon.HIToolbox
 import AppKit
+import os
+
+private let log = Logger(subsystem: "io.github.tiagowright.pika", category: "hotkey")
 
 /// A global hotkey via Carbon's `RegisterEventHotKey` — kernel-dispatched,
 /// not a `CGEventTap`, so it needs no Input Monitoring permission and
@@ -11,7 +14,34 @@ final class HotKeyManager {
     private let id: UInt32 = 1
     var onPressed: (() -> Void)?
 
-    func register(keyCode: UInt32, modifiers: UInt32) {
+    /// The result of the last `register`. `noErr` means the hotkey is
+    /// live; anything else usually means another app (or macOS itself,
+    /// for ctrl+space) already owns it (SHIPPING.md §4.2).
+    private(set) var status: OSStatus = noErr
+    var isRegistered: Bool { hotKeyRef != nil }
+
+    /// Replaces any previously registered hotkey. Safe to call again
+    /// when the config changes.
+    @discardableResult
+    func register(keyCode: UInt32, modifiers: UInt32) -> OSStatus {
+        installHandlerIfNeeded()
+        if let hotKeyRef {
+            UnregisterEventHotKey(hotKeyRef)
+            self.hotKeyRef = nil
+        }
+        let hotKeyID = EventHotKeyID(signature: signature, id: id)
+        var ref: EventHotKeyRef?
+        status = RegisterEventHotKey(keyCode, modifiers, hotKeyID, GetApplicationEventTarget(), 0, &ref)
+        if status == noErr {
+            hotKeyRef = ref
+        } else {
+            log.error("RegisterEventHotKey failed with \(self.status) — another app likely owns this hotkey")
+        }
+        return status
+    }
+
+    private func installHandlerIfNeeded() {
+        guard eventHandler == nil else { return }
         var eventType = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: OSType(kEventHotKeyPressed))
         InstallEventHandler(GetApplicationEventTarget(), { _, eventRef, userData in
             guard let userData, let eventRef else { return noErr }
@@ -21,13 +51,12 @@ final class HotKeyManager {
             if hkID.id == manager.id { manager.onPressed?() }
             return noErr
         }, 1, &eventType, Unmanaged.passUnretained(self).toOpaque(), &eventHandler)
-
-        let hotKeyID = EventHotKeyID(signature: signature, id: id)
-        RegisterEventHotKey(keyCode, modifiers, hotKeyID, GetApplicationEventTarget(), 0, &hotKeyRef)
     }
 
     func unregister() {
         if let hotKeyRef { UnregisterEventHotKey(hotKeyRef) }
         if let eventHandler { RemoveEventHandler(eventHandler) }
+        hotKeyRef = nil
+        eventHandler = nil
     }
 }

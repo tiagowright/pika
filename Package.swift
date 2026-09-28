@@ -13,6 +13,10 @@ let package = Package(
                 // font, binaries included — so it ships inside the .app too.
                 .copy("Resources/JetBrainsMono-OFL.txt")
             ]
+        ),
+        .testTarget(
+            name: "PikaTests",
+            dependencies: ["Pika"]
         )
     ]
 )

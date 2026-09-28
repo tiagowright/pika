@@ -125,8 +125,10 @@ for the cause and a stable local-development setup.
 
 ## Configuration
 
-`~/.config/pika/config.toml`, created with defaults on first launch. Read at
-startup only — restart Pika after editing.
+`~/.config/pika/config.toml`, created with defaults on first launch. Pika
+watches the file and applies edits as soon as you save; no restart needed.
+Unknown keys or invalid values are logged and ignored, and the rest of
+the file still applies.
 
 ```toml
 hotkey = "ctrl+space"        # "cmd+shift+k", "alt+space", …

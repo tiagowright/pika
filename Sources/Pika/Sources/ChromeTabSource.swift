@@ -50,11 +50,35 @@ final class ChromeTabSource {
 
     private var pendingWork: [Tier: DispatchWorkItem] = [:]
     private var retryDelay: [Tier: TimeInterval] = [:]
+    private var isEnabled = false // guarded by `lock`
+
+    /// Follows `[sources] chrome_tabs`. While off, Pika sends Chrome no
+    /// Apple Events at all, and Chrome is listed by window. Turning it
+    /// off drops the cached tabs so their rows go away immediately.
+    func setEnabled(_ enabled: Bool) {
+        lock.lock()
+        let changed = isEnabled != enabled
+        isEnabled = enabled
+        if !enabled { rawByWindowID = [:] }
+        lock.unlock()
+        guard changed else { return }
+
+        if enabled {
+            scheduleRefresh(tier: .focusedWindow, delay: 0.3)
+            scheduleRefresh(tier: .allWindows, delay: 1.0)
+        } else {
+            // Already-scheduled refreshes see the flag and stop, which also
+            // ends the idle re-poll and any retry back-off.
+            WindowSource.shared.applyChromeMerge()
+        }
+    }
 
     /// Debounced trigger so a burst of "Chrome activated" +
     /// "Chrome window title changed" notifications collapses into one
     /// AppleScript round-trip.
     func scheduleRefresh(tier: Tier, delay: TimeInterval = 0.05) {
+        lock.lock(); let enabled = isEnabled; lock.unlock()
+        guard enabled else { return }
         pendingWork[tier]?.cancel()
         let item = DispatchWorkItem { [weak self] in self?.refresh(tier: tier) }
         pendingWork[tier] = item
@@ -62,6 +86,8 @@ final class ChromeTabSource {
     }
 
     private func refresh(tier: Tier) {
+        lock.lock(); let enabled = isEnabled; lock.unlock()
+        guard enabled else { return }
         guard NSRunningApplication.runningApplications(withBundleIdentifier: Self.bundleID).first != nil else { return }
         let script = (tier == .focusedWindow) ? focusedWindowScript : allWindowsScript
         guard let script else { return }
@@ -96,6 +122,8 @@ final class ChromeTabSource {
         }
 
         lock.lock()
+        // Turned off while this AppleScript was in flight: drop the result.
+        guard isEnabled else { lock.unlock(); return }
         for i in 0..<ids.count {
             rawByWindowID[ids[i]] = RawWindow(chromeWindowID: ids[i], tabTitles: titles[i], tabURLs: urls[i], activeTabIndex: activeIdx[i])
         }

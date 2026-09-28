@@ -5,7 +5,9 @@ import AppKit
 /// because a keystroke-driven list needs a *bounded* redraw cost, and a
 /// single `draw(_:)` over ≤10 fixed-height rows gives that for free.
 final class PikaView: NSView {
-    let config: Config
+    var config: Config {
+        didSet { needsDisplay = true }
+    }
     private var query: String = ""
     private var results: [ScoredTarget] = []
     private var selectedID: TargetID?

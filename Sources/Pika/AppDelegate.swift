@@ -64,9 +64,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func startEverything() {
-        let config = Config.loadOrCreateDefault()
+        let store = ConfigStore.shared
+        store.startWatching()
         PanelController.shared.prewarm()
         hotKeyManager.onPressed = { PanelController.shared.toggle() }
-        hotKeyManager.register(keyCode: config.hotkeyKeyCode, modifiers: config.hotkeyModifiers)
+        hotKeyManager.register(keyCode: store.config.hotkeyKeyCode, modifiers: store.config.hotkeyModifiers)
+        store.observe { [weak self] old, new in
+            guard new.hotkeyKeyCode != old.hotkeyKeyCode || new.hotkeyModifiers != old.hotkeyModifiers else { return }
+            self?.hotKeyManager.register(keyCode: new.hotkeyKeyCode, modifiers: new.hotkeyModifiers)
+        }
     }
 }
