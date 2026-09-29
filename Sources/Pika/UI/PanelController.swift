@@ -73,7 +73,7 @@ final class PanelController {
 
         WindowSource.shared.start()
         ChromeTabSource.shared.setEnabled(config.chromeTabs)
-        LearnedStore.shared.decayAll()
+        LearnedStore.shared.decayIfDue()
 
         ConfigStore.shared.observe { [weak self] old, new in self?.apply(old: old, new: new) }
         Appearance.shared.observe { [weak self] theme in self?.apply(theme) }

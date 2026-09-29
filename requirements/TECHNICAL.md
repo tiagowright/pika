@@ -334,7 +334,7 @@ Persist `(normalized query → target key) → count` in `~/Library/Application 
 
 - **Target key** must survive restarts and title changes, so it is `(bundleID, windowIndexWithinApp)` for windows and `(bundleID, url)` for tabs — never a `CGWindowID`.
 - On each query, look up the exact query and each of its prefixes; add `learn_weight × log2(1 + count)`, capped so a single stale learned entry can't outrank a strong fresh match.
-- Decay: multiply all counts by 0.98 on each write, and drop entries below 0.1. This lets the model forget projects you've moved on from without any explicit cleanup.
+- Decay: multiply all counts by 0.98 per elapsed day (checked at launch and on each pick, so a long-running Pika still forgets), and drop entries below 0.1. This lets the model forget projects you've moved on from without any explicit cleanup. `learned.json` also keeps at most the 500 queries with the most picks.
 - One dictionary lookup per query, loaded into memory at launch — **no file I/O on the hot path** (§12).
 - Config: `ranking.learning = true`, `ranking.learn_weight = 60`. A `pika --forget` command clears it.
 
@@ -346,6 +346,7 @@ Persist `(normalized query → target key) → count` in `~/Library/Application 
 - Updated on `NSWorkspace.didActivateApplication` (app level) and `kAXFocusedWindowChangedNotification` (window level).
 - **Pika's own PID is excluded** — the panel taking key focus must never perturb the stack.
 - Persisted to `~/Library/Application Support/io.github.tiagowright.pika/mru.json` on a debounce so ordering survives a restart; entries are matched back by `(bundleID, title)` since `CGWindowID`s don't survive.
+- Bounded: entries older than 30 days are dropped, and at most the newest 10,000 are kept (each focus writes two, so roughly 5,000 windows and tabs). Without this the file grew without limit (about 80 entries a day in real use, 1,900 after 24 days), keeping old tab URLs indefinitely. In practice the 30-day rule binds first; the cap covers unusually busy months.
 - **Decided:** the empty-query list is MRU with the current window **omitted entirely** — not dimmed, not last. So `list[0]` is unambiguously the previous window, and there is no row whose selection is a no-op. The current window reappears in the list as soon as a query is typed (it can still be a legitimate fuzzy match).
 
 ---

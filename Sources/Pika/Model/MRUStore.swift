@@ -7,6 +7,14 @@ import Foundation
 final class MRUStore {
     static let shared = MRUStore()
 
+    /// Bounds on mru.json. Every new window title adds entries (a terminal
+    /// retitling itself, each Chrome tab), so without these the file grows
+    /// forever and keeps old tab URLs indefinitely. The recency *bonus*
+    /// fades within an hour; older entries only order the empty-query
+    /// list across restarts, so a month is plenty.
+    static let maxAge: TimeInterval = 30 * 86_400
+    static let maxEntries = 10_000
+
     private var lock = NSLock()
     private var recency: [String: TimeInterval] = [:]
     private var writeWorkItem: DispatchWorkItem?
@@ -53,6 +61,7 @@ final class MRUStore {
 
     private func save() {
         lock.lock()
+        recency = Self.pruned(recency, now: Date().timeIntervalSince1970)
         let snapshot = recency
         lock.unlock()
         guard let data = try? JSONEncoder().encode(snapshot) else { return }
@@ -62,7 +71,18 @@ final class MRUStore {
     private func load() {
         guard let data = try? Data(contentsOf: fileURL),
               let decoded = try? JSONDecoder().decode([String: TimeInterval].self, from: data) else { return }
-        recency = decoded
+        recency = Self.pruned(decoded, now: Date().timeIntervalSince1970)
+    }
+
+    /// Drops entries older than `maxAge`, then keeps the newest `maxEntries`.
+    static func pruned(_ recency: [String: TimeInterval], now: TimeInterval,
+                       maxAge: TimeInterval = maxAge, maxEntries: Int = maxEntries) -> [String: TimeInterval] {
+        var kept = recency.filter { now - $0.value <= maxAge }
+        if kept.count > maxEntries {
+            let newest = kept.sorted { $0.value > $1.value }.prefix(maxEntries)
+            kept = Dictionary(uniqueKeysWithValues: newest.map { ($0.key, $0.value) })
+        }
+        return kept
     }
 }
 

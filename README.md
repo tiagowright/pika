@@ -98,8 +98,8 @@ Monitoring are deliberately not requested.
 | Path | Contents |
 |---|---|
 | `~/.config/pika/config.toml` | Your settings |
-| `~/Library/Application Support/io.github.tiagowright.pika/mru.json` | Recency data, including window titles and full Chrome tab URLs |
-| `~/Library/Application Support/io.github.tiagowright.pika/learned.json` | Every query you type and the target you chose |
+| `~/Library/Application Support/io.github.tiagowright.pika/mru.json` | Recency data, including window titles and full Chrome tab URLs. Entries older than 30 days are dropped |
+| `~/Library/Application Support/io.github.tiagowright.pika/learned.json` | Queries you typed and the target you chose. Fades by 2% a day; at most 500 queries |
 | `~/Library/Caches/io.github.tiagowright.pika/icons/` | App icons as PNGs, named by bundle ID |
 
 **Read these before sharing them.** Chrome URLs can include query strings,
