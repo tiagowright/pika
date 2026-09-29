@@ -40,7 +40,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         let badged = problems().contains { $0.badges }
         guard badged != isBadged else { return }
         isBadged = badged
-        item.button?.image = MenuBarIcon.image(badged: badged)
+        item.button?.image = PikaGlyph.menuBarImage(badged: badged)
         item.button?.toolTip = badged ? "Pika needs attention" : "Pika"
     }
 

@@ -73,7 +73,7 @@ import Testing
         for badged in [false, true] {
             for (name, bg, appearance) in [("light", NSColor(white: 0.93, alpha: 1), NSAppearance(named: .aqua)!),
                                            ("dark", NSColor(white: 0.15, alpha: 1), NSAppearance(named: .darkAqua)!)] {
-                let icon = MenuBarIcon.image(badged: badged)
+                let icon = PikaGlyph.menuBarImage(badged: badged)
                 let scale: CGFloat = 8
                 let size = NSSize(width: 18 * scale, height: 18 * scale)
                 let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(size.width), pixelsHigh: Int(size.height), bitsPerSample: 8,

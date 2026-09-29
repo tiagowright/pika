@@ -339,7 +339,7 @@ Requirements:
    menu bar Theme submenu arrives with step 3
 3. **Menu bar status item**: the short menu, badge, and Quit (§1.5).
    ✅ *Done 2026-09-28*: `UI/StatusItemController.swift`,
-   `UI/MenuBarIcon.swift`, `SystemShortcuts.swift`. Problems listed in the
+   `UI/PikaGlyph.swift`, `SystemShortcuts.swift`. Problems listed in the
    menu: Accessibility missing, hotkey taken by another app, hotkey
    shadowed by a macOS shortcut, and config.toml issues (retired keys are
    notices and don't badge). Until step 5, "Open config.toml…" (⌘,) stands

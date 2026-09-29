@@ -21,6 +21,7 @@ final class PikaView: NSView {
     private let rowHeight: CGFloat = 26
     private let horizontalPadding: CGFloat = 14
     private let iconSize: CGFloat = 16
+    private let glyphSize: CGFloat = 16
     private let appColumnWidth: CGFloat = 120
 
     var onEnter: ((Target) -> Void)?
@@ -256,6 +257,11 @@ final class PikaView: NSView {
 
         (query as NSString).draw(at: NSPoint(x: x, y: (inputRowHeight - font.ascender + font.descender) / 2), withAttributes: textAttrs)
         x += (query as NSString).size(withAttributes: textAttrs).width
+
+        // The menu bar icon's mark, so the panel and the icon read as one app.
+        let glyphRect = NSRect(x: bounds.width - horizontalPadding - glyphSize, y: (inputRowHeight - glyphSize) / 2,
+                               width: glyphSize, height: glyphSize)
+        PikaGlyph.draw(in: glyphRect, side: glyphSize, color: theme.fgDim, eyes: theme.bgInput)
 
         // Static block cursor — no blink, per UX.md's "no idle redraws" call.
         let cursorWidth = font.maximumAdvancement.width

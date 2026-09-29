@@ -1,10 +1,10 @@
 import AppKit
 
-/// The status item's glyph: the pika head from `AppIcon.svg` as a
-/// monochrome silhouette with the eyes cut out, so it reads in both
-/// menu bar appearances (SHIPPING.md §4.1.1). Drawn from the SVG's own
-/// path data rather than a bitmap, so it stays crisp at any scale.
-enum MenuBarIcon {
+/// The pika head from `AppIcon.svg` as a flat silhouette with the eyes
+/// cut out: the menu bar icon, and the same mark in the switcher's query
+/// row so the two read as one app. Drawn from the SVG's own path data
+/// rather than a bitmap, so it stays crisp at any scale.
+enum PikaGlyph {
     /// Ears and face, copied from AppIcon.svg (512×512, y down). The tuft
     /// is left out: it crosses itself, and it's invisible at 18pt anyway.
     private static let silhouette = [
@@ -12,46 +12,56 @@ enum MenuBarIcon {
         "M322 195C314 154 336 116 370 113C393 110 410 124 415 151C421 181 406 215 378 231Z",
         "M256 172C180 172 132 209 114 265C104 288 96 313 101 339C110 389 174 418 256 418C338 418 402 389 411 339C416 313 408 288 398 265C380 209 332 172 256 172Z",
     ]
-    /// The SVG's eyes (rx 16, ry 21), enlarged so they survive at 18pt.
+    /// The SVG's eyes (rx 16, ry 21), enlarged so they survive at 16pt.
     private static let eyes = [NSPoint(x: 189, y: 278), NSPoint(x: 323, y: 278)]
     private static let eyeRadii = NSSize(width: 26, height: 34)
     private static let artBounds = NSRect(x: 91, y: 110, width: 330, height: 308)
 
-    /// `badged` adds an orange dot: something needs the user's attention.
-    /// A badged image can't be a template (the dot must stay orange), so
-    /// it draws the head in the menu bar's label colour itself.
-    static func image(badged: Bool) -> NSImage {
-        let size = NSSize(width: 18, height: 18)
-        let image = NSImage(size: size, flipped: true) { rect in
-            let artSide: CGFloat = 16
-            let scale = artSide / max(artBounds.width, artBounds.height)
-            let origin = NSPoint(
-                x: (rect.width - artBounds.width * scale) / 2 - artBounds.minX * scale,
-                y: (rect.height - artBounds.height * scale) / 2 - artBounds.minY * scale
-            )
-            var transform = AffineTransform(translationByX: origin.x, byY: origin.y)
-            transform.scale(scale)
+    /// Paths are parsed once; drawing only transforms copies.
+    private static let shapes: [NSBezierPath] = silhouette.map(path(fromSVG:))
+    private static let eyeShapes: [NSBezierPath] = eyes.map { eye in
+        NSBezierPath(ovalIn: NSRect(x: eye.x - eyeRadii.width, y: eye.y - eyeRadii.height,
+                                    width: eyeRadii.width * 2, height: eyeRadii.height * 2))
+    }
 
-            // Fill each shape on its own, then clear the eyes. As one path,
-            // the shapes' opposite windings would cancel where they overlap.
-            (badged ? NSColor.labelColor : NSColor.black).setFill()
-            for d in silhouette {
-                let shape = path(fromSVG: d)
-                shape.transform(using: transform)
-                shape.fill()
-            }
+    /// Draws the head centred in `rect`, `side` points across, in a
+    /// flipped (y-down) context. `eyes` fills the eyes with a colour;
+    /// nil clears them to transparent, which only makes sense in an image.
+    static func draw(in rect: NSRect, side: CGFloat, color: NSColor, eyes eyeColor: NSColor?) {
+        let scale = side / max(artBounds.width, artBounds.height)
+        var transform = AffineTransform(
+            translationByX: rect.minX + (rect.width - artBounds.width * scale) / 2 - artBounds.minX * scale,
+            byY: rect.minY + (rect.height - artBounds.height * scale) / 2 - artBounds.minY * scale
+        )
+        transform.scale(scale)
 
-            let context = NSGraphicsContext.current
-            context?.compositingOperation = .clear
-            for eye in eyes {
-                let oval = NSBezierPath(ovalIn: NSRect(x: eye.x - eyeRadii.width, y: eye.y - eyeRadii.height,
-                                                       width: eyeRadii.width * 2, height: eyeRadii.height * 2))
-                oval.transform(using: transform)
-                oval.fill()
-            }
-            context?.compositingOperation = .sourceOver
+        // Fill each shape on its own: as one path, the shapes' opposite
+        // windings would cancel where they overlap.
+        color.setFill()
+        for shape in shapes {
+            let copy = shape.copy() as! NSBezierPath
+            copy.transform(using: transform)
+            copy.fill()
+        }
 
+        let context = NSGraphicsContext.current
+        if let eyeColor { eyeColor.setFill() } else { context?.compositingOperation = .clear }
+        for eye in eyeShapes {
+            let copy = eye.copy() as! NSBezierPath
+            copy.transform(using: transform)
+            copy.fill()
+        }
+        context?.compositingOperation = .sourceOver
+    }
+
+    /// The status item image. `badged` adds an orange dot: something needs
+    /// the user's attention. A badged image can't be a template (the dot
+    /// must stay orange), so it draws the head in the label colour itself.
+    static func menuBarImage(badged: Bool) -> NSImage {
+        let image = NSImage(size: NSSize(width: 18, height: 18), flipped: true) { rect in
+            draw(in: rect, side: 16, color: badged ? .labelColor : .black, eyes: nil)
             if badged {
+                let context = NSGraphicsContext.current
                 let dot = NSRect(x: rect.maxX - 6, y: rect.maxY - 6, width: 6, height: 6)
                 context?.compositingOperation = .clear
                 NSBezierPath(ovalIn: dot.insetBy(dx: -1.5, dy: -1.5)).fill() // gap around the dot
