@@ -31,6 +31,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         item.menu = menu
         ConfigStore.shared.observeIssues { [weak self] _ in self?.refresh() }
         ConfigStore.shared.observe { [weak self] _, _ in self?.refresh() }
+        PermissionCenter.shared.observe { [weak self] in self?.refresh() }
         refresh()
     }
 
@@ -49,8 +50,9 @@ final class StatusItemController: NSObject, NSMenuDelegate {
     private func problems() -> [Problem] {
         var result: [Problem] = []
         let config = ConfigStore.shared.config
+        let permissions = PermissionCenter.shared
 
-        if !AXIsProcessTrusted() {
+        if !permissions.accessibility {
             result.append(Problem(
                 title: "Grant Accessibility…",
                 detail: "Pika can't list or switch windows without it",
@@ -59,19 +61,33 @@ final class StatusItemController: NSObject, NSMenuDelegate {
             ))
         }
 
-        if hotKey.hasAttempted, hotKey.status != noErr {
+        switch hotKey.health(for: config) {
+        case .takenByApp:
             result.append(Problem(
                 title: "Change the hotkey…",
                 detail: "\(config.hotkey) is taken by another app, so it does nothing",
                 badges: true,
                 perform: Self.openConfigFile
             ))
-        } else if let clash = SystemShortcuts.conflict(keyCode: config.hotkeyKeyCode, carbonModifiers: config.hotkeyModifiers) {
+        case .shadowedBySystem(let clash):
             result.append(Problem(
                 title: "Open Keyboard Shortcuts…",
                 detail: "macOS uses \(config.hotkey) for “\(clash)” and gets it first",
                 badges: true,
                 perform: { Self.openSystemSettings("com.apple.Keyboard-Settings.extension") }
+            ))
+        case .ok, .notRegisteredYet:
+            break
+        }
+
+        // Optional, so a note rather than a badge — but the user did ask
+        // for Chrome tabs, so say why they aren't there.
+        if config.chromeTabs, permissions.chrome.grant == .denied {
+            result.append(Problem(
+                title: "Allow Chrome tabs…",
+                detail: "Automation for Google Chrome is off, so Chrome is listed by window",
+                badges: false,
+                perform: { Self.openSystemSettings("com.apple.preference.security?Privacy_Automation") }
             ))
         }
 
@@ -89,7 +105,11 @@ final class StatusItemController: NSObject, NSMenuDelegate {
     // MARK: - Menu
 
     func menuNeedsUpdate(_ menu: NSMenu) {
-        refresh() // permissions can change behind our back; the menu is a good moment to look
+        // Permissions can change behind our back; opening the menu is a
+        // good moment to look. Chrome's answer arrives asynchronously and
+        // refreshes the badge; the open menu shows what's known now.
+        PermissionCenter.shared.refresh()
+        refresh()
         menu.removeAllItems()
 
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String

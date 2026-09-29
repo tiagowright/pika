@@ -51,6 +51,21 @@ final class ChromeTabSource {
     private var pendingWork: [Tier: DispatchWorkItem] = [:]
     private var retryDelay: [Tier: TimeInterval] = [:]
     private var isEnabled = false // guarded by `lock`
+    /// Chrome answered -1743: Automation is denied. Retrying can't help —
+    /// macOS never re-asks — so stop until PermissionCenter sees a grant.
+    private var isDenied = false  // guarded by `lock`
+
+    /// PermissionCenter saw Automation granted (for example, the user
+    /// switched it on in System Settings after denying it): start again.
+    func permissionGranted() {
+        lock.lock()
+        let wasDenied = isDenied
+        isDenied = false
+        lock.unlock()
+        guard wasDenied else { return }
+        scheduleRefresh(tier: .focusedWindow, delay: 0.1)
+        scheduleRefresh(tier: .allWindows, delay: 0.5)
+    }
 
     /// Follows `[sources] chrome_tabs`. While off, Pika sends Chrome no
     /// Apple Events at all, and Chrome is listed by window. Turning it
@@ -77,7 +92,7 @@ final class ChromeTabSource {
     /// "Chrome window title changed" notifications collapses into one
     /// AppleScript round-trip.
     func scheduleRefresh(tier: Tier, delay: TimeInterval = 0.05) {
-        lock.lock(); let enabled = isEnabled; lock.unlock()
+        lock.lock(); let enabled = isEnabled && !isDenied; lock.unlock()
         guard enabled else { return }
         pendingWork[tier]?.cancel()
         let item = DispatchWorkItem { [weak self] in self?.refresh(tier: tier) }
@@ -86,7 +101,7 @@ final class ChromeTabSource {
     }
 
     private func refresh(tier: Tier) {
-        lock.lock(); let enabled = isEnabled; lock.unlock()
+        lock.lock(); let enabled = isEnabled && !isDenied; lock.unlock()
         guard enabled else { return }
         guard NSRunningApplication.runningApplications(withBundleIdentifier: Self.bundleID).first != nil else { return }
         let script = (tier == .focusedWindow) ? focusedWindowScript : allWindowsScript
@@ -95,6 +110,12 @@ final class ChromeTabSource {
         let result = script.executeAndReturnError(&errorInfo)
         guard errorInfo == nil else {
             log.error("refresh(\(String(describing: tier), privacy: .public)) AppleScript error: \(String(describing: errorInfo), privacy: .public)")
+            if errorInfo?[NSAppleScript.errorNumber] as? Int == Int(errAEEventNotPermitted) {
+                lock.lock(); isDenied = true; lock.unlock()
+                retryDelay[tier] = nil
+                DispatchQueue.main.async { PermissionCenter.shared.noteChromeDenied() }
+                return
+            }
             // The *first* Apple Event Pika ever sends to Chrome always
             // triggers the one-time Automation permission prompt, and
             // that triggering call itself fails while the dialog is up

@@ -62,3 +62,29 @@ final class HotKeyManager {
         eventHandler = nil
     }
 }
+
+/// Whether pressing the configured hotkey will actually open Pika — the
+/// hotkey row of the checklist (SETTINGS.md §2.1).
+enum HotkeyHealth: Equatable {
+    case ok
+    case notRegisteredYet          // waiting on Accessibility
+    case takenByApp                // RegisterEventHotKey failed
+    case shadowedBySystem(String)  // registered, but a macOS shortcut fires first
+
+    var isProblem: Bool {
+        switch self {
+        case .ok, .notRegisteredYet: return false
+        case .takenByApp, .shadowedBySystem: return true
+        }
+    }
+}
+
+extension HotKeyManager {
+    func health(for config: Config) -> HotkeyHealth {
+        if let clash = SystemShortcuts.conflict(keyCode: config.hotkeyKeyCode, carbonModifiers: config.hotkeyModifiers) {
+            return .shadowedBySystem(clash)
+        }
+        guard hasAttempted else { return .notRegisteredYet }
+        return status == noErr ? .ok : .takenByApp
+    }
+}

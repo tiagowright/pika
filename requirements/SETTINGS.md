@@ -190,6 +190,12 @@ Each item shows its tab, control, config key, and notes. Items marked
 | **Hotkey** | Health check (not a permission) | Yes, in practice | `RegisterEventHotKey` `OSStatus` | Record a different hotkey |
 | Screen Recording, Input Monitoring | — | **Never** | — | Say so explicitly on screen, because it builds trust |
 
+**Notarization trap.** Pika is signed without the hardened runtime today,
+so Apple Events need no entitlement. A notarized build (SHIPPING §3) must
+enable the hardened runtime and add
+`com.apple.security.automation.apple-events`. Without it, every Chrome
+check returns "denied" with no prompt shown.
+
 Code gap found while writing this: `ChromeTabSource.refresh` retries with
 back-off on **any** AppleScript error, including `-1743` (denied). It keeps
 retrying every 20 s for the rest of the session. It should record `-1743`
@@ -346,7 +352,12 @@ Requirements:
    in for Settings…
 4. **Permission model**: a `PermissionCenter` that reports live state for
    the four items, the `AEDeterminePermissionToAutomateTarget` check, the
-   Chrome `-1743` fix, and `state.json`
+   Chrome `-1743` fix, and `state.json`. ✅ *Done 2026-09-28*:
+   `Permissions/PermissionCenter.swift`, `Model/StateStore.swift`,
+   `HotkeyHealth` in `HotKey.swift`. Re-checks at start, on leaving System
+   Settings, on Chrome launch/quit, on menu open, and every 1 s only while
+   Accessibility is missing. Not yet exercised: the denied → granted
+   Chrome path (it needs a real denial, which would reset your grant)
 5. **Settings window**: tabs wired to `ConfigStore` and `PermissionCenter`,
    plus the hotkey recorder and entry points E1–E3
 6. **Onboarding**: Welcome → checklist → try-it, reusing the checklist

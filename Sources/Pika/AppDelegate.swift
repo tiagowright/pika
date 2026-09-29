@@ -8,8 +8,8 @@ private let log = Logger(subsystem: "io.github.tiagowright.pika", category: "lau
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let hotKeyManager = HotKeyManager()
     private var activityToken: NSObjectProtocol?
-    private var permissionCheckTimer: Timer?
     private var statusItem: StatusItemController?
+    private var started = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory) // no Dock icon, no menu bar — LSUIElement equivalent (TECHNICAL.md §3)
@@ -19,10 +19,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // granted it yet finds out, and how they quit.
         statusItem = StatusItemController(hotKey: hotKeyManager)
 
-        if AXIsProcessTrusted() {
+        let permissions = PermissionCenter.shared
+        permissions.observe { [weak self] in
+            if permissions.accessibility { self?.startEverything() }
+        }
+        permissions.start()
+
+        if permissions.accessibility {
             startEverything()
         } else {
-            promptForAccessibilityAndWait()
+            // Shows the system prompt the first time only. PermissionCenter
+            // polls until the grant lands, then startEverything runs.
+            let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
+            _ = AXIsProcessTrustedWithOptions(options)
         }
     }
 
@@ -54,21 +63,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    private func promptForAccessibilityAndWait() {
-        let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
-        _ = AXIsProcessTrustedWithOptions(options)
-        permissionCheckTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] timer in
-            guard let self else { return }
-            if AXIsProcessTrusted() {
-                timer.invalidate()
-                self.permissionCheckTimer = nil
-                self.startEverything()
-                self.statusItem?.refresh()
-            }
-        }
-    }
-
+    /// Runs once, the first time Accessibility is known to be granted.
     private func startEverything() {
+        guard !started else { return }
+        started = true
         let store = ConfigStore.shared
         store.startWatching()
         Appearance.shared.start()
