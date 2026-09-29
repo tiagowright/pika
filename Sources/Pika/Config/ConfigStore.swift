@@ -68,6 +68,13 @@ final class ConfigStore {
 
     func reload() { load(createIfMissing: false) }
 
+    /// Recreates the default file if it was deleted, so there's something
+    /// to open.
+    func ensureFileExists() {
+        guard !FileManager.default.fileExists(atPath: resolvedURL.path) else { return }
+        load(createIfMissing: true)
+    }
+
     private func load(createIfMissing: Bool) {
         let url = resolvedURL
         let text: String

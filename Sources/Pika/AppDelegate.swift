@@ -9,11 +9,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let hotKeyManager = HotKeyManager()
     private var activityToken: NSObjectProtocol?
     private var permissionCheckTimer: Timer?
+    private var statusItem: StatusItemController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory) // no Dock icon, no menu bar — LSUIElement equivalent (TECHNICAL.md §3)
         disableAppNap()
         registerAsLoginItem()
+        // Before the Accessibility check: the menu is how a user who hasn't
+        // granted it yet finds out, and how they quit.
+        statusItem = StatusItemController(hotKey: hotKeyManager)
 
         if AXIsProcessTrusted() {
             startEverything()
@@ -59,6 +63,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 timer.invalidate()
                 self.permissionCheckTimer = nil
                 self.startEverything()
+                self.statusItem?.refresh()
             }
         }
     }
@@ -70,9 +75,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         PanelController.shared.prewarm()
         hotKeyManager.onPressed = { PanelController.shared.toggle() }
         hotKeyManager.register(keyCode: store.config.hotkeyKeyCode, modifiers: store.config.hotkeyModifiers)
+        statusItem?.refresh()
         store.observe { [weak self] old, new in
             guard new.hotkeyKeyCode != old.hotkeyKeyCode || new.hotkeyModifiers != old.hotkeyModifiers else { return }
             self?.hotKeyManager.register(keyCode: new.hotkeyKeyCode, modifiers: new.hotkeyModifiers)
+            self?.statusItem?.refresh()
         }
     }
 }

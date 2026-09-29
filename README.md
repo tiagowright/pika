@@ -57,9 +57,17 @@ Spaces mean AND: `z pika` requires both tokens to match, in any order.
 
 **The `Ctrl+Space` collision:** macOS binds `Ctrl+Space` to 
 *Select the previous input source*. If the
-panel doesn't appear, that's almost certainly why. Clear it in *System
-Settings → Keyboard → Keyboard Shortcuts → Input Sources*, or pick a
-different hotkey in the config file.
+panel doesn't appear, that's almost certainly why. Pika detects the clash
+and puts an orange dot on its menu bar icon; the menu links to *System
+Settings → Keyboard → Keyboard Shortcuts → Input Sources*, where you can
+clear it. Or pick a different hotkey in the config file.
+
+## Menu bar
+
+Pika's menu bar icon (a pika head) is how you quit, switch the theme, and
+open `config.toml`. An orange dot on it means something needs you — a
+missing permission, a hotkey that won't fire, or a config line Pika
+couldn't use — and the menu says what and links to the fix.
 
 ## Permissions
 
@@ -178,12 +186,10 @@ Items**, and check **Privacy & Security → Accessibility**.
 Named here rather than discovered by you. `requirements/SHIPPING.md` has the
 full list with reasoning.
 
-- **No UI outside the panel** — no menu bar item, no preferences window.
-  Quitting means Activity Monitor or `pkill`.
+- **No settings window yet.** The menu bar item covers quitting, the
+  theme, and opening `config.toml`; everything else is edited in the file.
 - **It registers itself as a login item on first launch**, silently, without
   asking.
-- **A failed hotkey registration isn't reported.** If `Ctrl+Space` is taken,
-  Pika starts and simply never opens.
 - **Window titles for other Spaces can be stale.** Accessibility titles are
   Space-scoped, so a window you haven't visited since renaming shows its old
   title until you do.

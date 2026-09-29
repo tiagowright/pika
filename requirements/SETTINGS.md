@@ -337,7 +337,13 @@ Requirements:
    contrast floors in `ThemeContrastTests`, and an opt-in panel render
    (`PIKA_SNAPSHOT_DIR=… swift test --filter PanelSnapshotTests`). The
    menu bar Theme submenu arrives with step 3
-3. **Menu bar status item**: the short menu, badge, and Quit (§1.5)
+3. **Menu bar status item**: the short menu, badge, and Quit (§1.5).
+   ✅ *Done 2026-09-28*: `UI/StatusItemController.swift`,
+   `UI/MenuBarIcon.swift`, `SystemShortcuts.swift`. Problems listed in the
+   menu: Accessibility missing, hotkey taken by another app, hotkey
+   shadowed by a macOS shortcut, and config.toml issues (retired keys are
+   notices and don't badge). Until step 5, "Open config.toml…" (⌘,) stands
+   in for Settings…
 4. **Permission model**: a `PermissionCenter` that reports live state for
    the four items, the `AEDeterminePermissionToAutomateTarget` check, the
    Chrome `-1743` fix, and `state.json`

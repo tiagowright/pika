@@ -67,3 +67,35 @@ import Testing
         }
     }
 }
+
+@MainActor @Suite struct MenuBarIconSnapshotTests {
+    @Test(.enabled(if: PanelSnapshotTests.outDir != nil)) func render() throws {
+        for badged in [false, true] {
+            for (name, bg, appearance) in [("light", NSColor(white: 0.93, alpha: 1), NSAppearance(named: .aqua)!),
+                                           ("dark", NSColor(white: 0.15, alpha: 1), NSAppearance(named: .darkAqua)!)] {
+                let icon = MenuBarIcon.image(badged: badged)
+                let scale: CGFloat = 8
+                let size = NSSize(width: 18 * scale, height: 18 * scale)
+                let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(size.width), pixelsHigh: Int(size.height), bitsPerSample: 8,
+                                           samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
+                NSGraphicsContext.saveGraphicsState()
+                NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+                appearance.performAsCurrentDrawingAppearance {
+                    bg.setFill(); NSRect(origin: .zero, size: size).fill()
+                    if icon.isTemplate {
+                        // What the menu bar does with a template: tint it with the label colour.
+                        let tinted = NSImage(size: icon.size, flipped: false) { r in
+                            icon.draw(in: r); NSColor.labelColor.set(); r.fill(using: .sourceAtop); return true
+                        }
+                        tinted.draw(in: NSRect(origin: .zero, size: size))
+                    } else {
+                        icon.draw(in: NSRect(origin: .zero, size: size))
+                    }
+                }
+                NSGraphicsContext.restoreGraphicsState()
+                try rep.representation(using: .png, properties: [:])!
+                    .write(to: URL(fileURLWithPath: PanelSnapshotTests.outDir!).appendingPathComponent("menubar-\(badged ? "badged" : "plain")-\(name).png"))
+            }
+        }
+    }
+}

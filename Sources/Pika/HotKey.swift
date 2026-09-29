@@ -14,10 +14,11 @@ final class HotKeyManager {
     private let id: UInt32 = 1
     var onPressed: (() -> Void)?
 
-    /// The result of the last `register`. `noErr` means the hotkey is
-    /// live; anything else usually means another app (or macOS itself,
-    /// for ctrl+space) already owns it (SHIPPING.md §4.2).
+    /// The result of the last `register`. Anything but `noErr` usually
+    /// means another app already registered it (SHIPPING.md §4.2). macOS's
+    /// own shortcuts don't show up here — see `SystemShortcuts`.
     private(set) var status: OSStatus = noErr
+    private(set) var hasAttempted = false
     var isRegistered: Bool { hotKeyRef != nil }
 
     /// Replaces any previously registered hotkey. Safe to call again
@@ -25,6 +26,7 @@ final class HotKeyManager {
     @discardableResult
     func register(keyCode: UInt32, modifiers: UInt32) -> OSStatus {
         installHandlerIfNeeded()
+        hasAttempted = true
         if let hotKeyRef {
             UnregisterEventHotKey(hotKeyRef)
             self.hotKeyRef = nil

@@ -5,6 +5,9 @@ import Foundation
 struct ConfigIssue: Equatable {
     let line: Int?       // 1-based; nil when the issue isn't tied to a line
     let message: String
+    /// Harmless (a leftover key that does nothing): listed, but doesn't
+    /// badge the menu bar icon.
+    var isNotice = false
 
     var description: String {
         line.map { "config.toml line \($0): \(message)" } ?? "config.toml: \(message)"

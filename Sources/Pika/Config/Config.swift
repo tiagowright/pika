@@ -99,7 +99,7 @@ struct Config: Equatable {
         for entry in doc.entries {
             let path = ConfigDocument.path(entry.section, entry.key)
             if let reason = retiredKeys[path] {
-                issues.append(ConfigIssue(line: entry.line, message: "`\(path)` is ignored: \(reason)"))
+                issues.append(ConfigIssue(line: entry.line, message: "`\(path)` is ignored: \(reason)", isNotice: true))
                 continue
             }
             guard let spec = schema[entry.section]?[entry.key] else {
