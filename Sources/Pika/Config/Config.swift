@@ -215,9 +215,31 @@ struct Config: Equatable {
         return .success((keyCode, mods))
     }
 
+    /// The config text for a key combination, e.g. "cmd+shift+k", or nil
+    /// if Pika has no name for the key. Used by the Settings hotkey
+    /// recorder; round-trips through `parseHotkey`.
+    static func hotkeyString(keyCode: UInt32, command: Bool, control: Bool, option: Bool, shift: Bool) -> String? {
+        guard let key = keyNames[keyCode] else { return nil }
+        var parts: [String] = []
+        if control { parts.append("ctrl") }
+        if option { parts.append("alt") }
+        if shift { parts.append("shift") }
+        if command { parts.append("cmd") }
+        return (parts + [key]).joined(separator: "+")
+    }
+
+    private static let keyNames: [UInt32: String] = Dictionary(keyCodeMap.map { ($1, $0) }, uniquingKeysWith: { a, _ in a })
+
     private static let keyCodeMap: [String: UInt32] = [
         "space": UInt32(kVK_Space), "return": UInt32(kVK_Return), "tab": UInt32(kVK_Tab),
         "escape": UInt32(kVK_Escape),
+        "f1": UInt32(kVK_F1), "f2": UInt32(kVK_F2), "f3": UInt32(kVK_F3), "f4": UInt32(kVK_F4),
+        "f5": UInt32(kVK_F5), "f6": UInt32(kVK_F6), "f7": UInt32(kVK_F7), "f8": UInt32(kVK_F8),
+        "f9": UInt32(kVK_F9), "f10": UInt32(kVK_F10), "f11": UInt32(kVK_F11), "f12": UInt32(kVK_F12),
+        "-": UInt32(kVK_ANSI_Minus), "=": UInt32(kVK_ANSI_Equal), "[": UInt32(kVK_ANSI_LeftBracket),
+        "]": UInt32(kVK_ANSI_RightBracket), ";": UInt32(kVK_ANSI_Semicolon), "'": UInt32(kVK_ANSI_Quote),
+        ",": UInt32(kVK_ANSI_Comma), ".": UInt32(kVK_ANSI_Period), "/": UInt32(kVK_ANSI_Slash),
+        "\\": UInt32(kVK_ANSI_Backslash), "`": UInt32(kVK_ANSI_Grave),
         "a": 0, "s": 1, "d": 2, "f": 3, "h": 4, "g": 5, "z": 6, "x": 7, "c": 8, "v": 9,
         "b": 11, "q": 12, "w": 13, "e": 14, "r": 15, "y": 16, "t": 17,
         "1": 18, "2": 19, "3": 20, "4": 21, "6": 22, "5": 23, "9": 25, "7": 26, "8": 28, "0": 29,

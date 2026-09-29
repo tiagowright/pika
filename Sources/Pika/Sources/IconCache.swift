@@ -18,6 +18,16 @@ final class IconCache {
         try? FileManager.default.createDirectory(at: diskDir, withIntermediateDirectories: true)
     }
 
+    /// Deletes the PNGs on disk (Settings → Privacy & data). Icons already
+    /// in memory stay, so nothing visibly changes; they're re-rasterized
+    /// on the next launch.
+    func clearDisk() {
+        let files = (try? FileManager.default.contentsOfDirectory(at: diskDir, includingPropertiesForKeys: nil)) ?? []
+        files.forEach { try? FileManager.default.removeItem(at: $0) }
+    }
+
+    var directory: URL { diskDir }
+
     func icon(forBundleID bundleID: String) -> NSImage? {
         lock.lock(); defer { lock.unlock() }
         return memory[bundleID]

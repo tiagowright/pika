@@ -1,6 +1,5 @@
 import AppKit
 import ApplicationServices
-import ServiceManagement
 import os
 
 private let log = Logger(subsystem: "io.github.tiagowright.pika", category: "launch")
@@ -10,14 +9,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var activityToken: NSObjectProtocol?
     private var statusItem: StatusItemController?
     private var started = false
+    private lazy var settings = SettingsWindowController(hotKey: hotKeyManager)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory) // no Dock icon, no menu bar — LSUIElement equivalent (TECHNICAL.md §3)
+        NSApp.mainMenu = Self.makeMainMenu()
         disableAppNap()
-        registerAsLoginItem()
+        // Launch at login is no longer registered silently here: only from
+        // Settings (and, in step 6, onboarding) — SETTINGS.md §2.4.6.
+
         // Before the Accessibility check: the menu is how a user who hasn't
         // granted it yet finds out, and how they quit.
-        statusItem = StatusItemController(hotKey: hotKeyManager)
+        statusItem = StatusItemController(hotKey: hotKeyManager) { [weak self] pane in self?.openSettings(pane) }
+        PanelController.shared.onOpenSettings = { [weak self] in self?.openSettings(nil) }
 
         let permissions = PermissionCenter.shared
         permissions.observe { [weak self] in
@@ -35,6 +39,44 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    /// Opening Pika.app again while it's running — from Finder, Spotlight,
+    /// or Raycast — opens Settings. With no Dock icon, and a menu bar icon
+    /// the notch can hide, it's the way in that always works (SETTINGS.md
+    /// §1.2 E2).
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        openSettings(nil)
+        return false
+    }
+
+    /// Never shown (Pika is an accessory app), but its key equivalents
+    /// still work in Pika's windows: ⌘W closes Settings, ⌘C copies the
+    /// troubleshooting command. No ⌘Q: quitting Pika by reflex would
+    /// silently kill the hotkey; Quit lives in the menu bar item.
+    private static func makeMainMenu() -> NSMenu {
+        let main = NSMenu()
+        func submenu(_ title: String, _ items: [NSMenuItem]) {
+            let menu = NSMenu(title: title)
+            items.forEach(menu.addItem)
+            let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+            item.submenu = menu
+            main.addItem(item)
+        }
+        submenu("Pika", [])
+        submenu("File", [NSMenuItem(title: "Close", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")])
+        submenu("Edit", [
+            NSMenuItem(title: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x"),
+            NSMenuItem(title: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c"),
+            NSMenuItem(title: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v"),
+            NSMenuItem(title: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a"),
+        ])
+        submenu("Window", [NSMenuItem(title: "Minimize", action: #selector(NSWindow.performMiniaturize(_:)), keyEquivalent: "m")])
+        return main
+    }
+
+    private func openSettings(_ pane: SettingsModel.Pane?) {
+        settings.show(pane)
+    }
+
     /// A resident agent that sits idle gets throttled by App Nap, and the
     /// *first* hotkey press after a quiet period would visibly lag —
     /// exactly the "fast except the first time" bug called out in
@@ -44,23 +86,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             options: [.userInitiatedAllowingIdleSystemSleep, .latencyCritical],
             reason: "Instant window switching"
         )
-    }
-
-    /// Registers Pika.app to launch at login via `SMAppService` (macOS
-    /// 13+) — no separate LaunchAgent plist to maintain. Idempotent: safe
-    /// to call on every launch, since it's a no-op once already
-    /// registered. Requires Pika to be running from a stable path (see
-    /// build.sh, which installs to /Applications) — SMAppService ties
-    /// the registration to the bundle's location.
-    private func registerAsLoginItem() {
-        let service = SMAppService.mainApp
-        guard service.status != .enabled else { return }
-        do {
-            try service.register()
-            log.info("Registered as a login item")
-        } catch {
-            log.error("Failed to register as a login item: \(error.localizedDescription, privacy: .public)")
-        }
     }
 
     /// Runs once, the first time Accessibility is known to be granted.

@@ -19,6 +19,7 @@ final class HotKeyManager {
     /// own shortcuts don't show up here — see `SystemShortcuts`.
     private(set) var status: OSStatus = noErr
     private(set) var hasAttempted = false
+    private var registered: (keyCode: UInt32, modifiers: UInt32)?
     var isRegistered: Bool { hotKeyRef != nil }
 
     /// Replaces any previously registered hotkey. Safe to call again
@@ -27,6 +28,7 @@ final class HotKeyManager {
     func register(keyCode: UInt32, modifiers: UInt32) -> OSStatus {
         installHandlerIfNeeded()
         hasAttempted = true
+        registered = (keyCode, modifiers)
         if let hotKeyRef {
             UnregisterEventHotKey(hotKeyRef)
             self.hotKeyRef = nil
@@ -53,6 +55,18 @@ final class HotKeyManager {
             if hkID.id == manager.id { manager.onPressed?() }
             return noErr
         }, 1, &eventType, Unmanaged.passUnretained(self).toOpaque(), &eventHandler)
+    }
+
+    /// Releases the hotkey while Settings records a new one, so pressing
+    /// the current hotkey is captured rather than opening the panel.
+    func suspend() {
+        if let hotKeyRef { UnregisterEventHotKey(hotKeyRef) }
+        hotKeyRef = nil
+    }
+
+    func resume() {
+        guard hotKeyRef == nil, let registered else { return }
+        register(keyCode: registered.keyCode, modifiers: registered.modifiers)
     }
 
     func unregister() {

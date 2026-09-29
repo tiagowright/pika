@@ -62,12 +62,18 @@ and puts an orange dot on its menu bar icon; the menu links to *System
 Settings → Keyboard → Keyboard Shortcuts → Input Sources*, where you can
 clear it. Or pick a different hotkey in the config file.
 
-## Menu bar
+## Menu bar and Settings
 
 Pika's menu bar icon (a pika head) is how you quit, switch the theme, and
-open `config.toml`. An orange dot on it means something needs you — a
+open Settings. An orange dot on it means something needs you — a
 missing permission, a hotkey that won't fire, or a config line Pika
 couldn't use — and the menu says what and links to the fix.
+
+Settings (`⌘,` from the menu or from the switcher) has every option in
+`config.toml`, a hotkey recorder, and a Permissions page showing what's
+granted and how to fix what isn't. If the notch hides the menu bar icon,
+open Pika.app again from Spotlight or Finder: while Pika is running, that
+opens Settings.
 
 ## Permissions
 
@@ -122,8 +128,8 @@ cd pika
 `install.sh` builds, tells you what it's about to do, and asks before it
 quits a running Pika and replaces `/Applications/Pika.app`. 
 Installing to `/Applications` gives Pika a stable app location for Accessibility
-permissions. The current development build also registers a login item, so
-Pika is available immediately after a login.
+permissions. To have Pika start when you log in, turn on **Start Pika at
+login** in Settings → General.
 
 ## Rebuilding Pika
 
@@ -133,8 +139,9 @@ for the cause and a stable local-development setup.
 
 ## Configuration
 
-`~/.config/pika/config.toml`, created with defaults on first launch. Pika
-watches the file and applies edits as soon as you save; no restart needed.
+`~/.config/pika/config.toml`, created with defaults on first launch.
+Settings reads and writes this file (keeping your comments), and Pika
+watches it, so edits made either way apply as soon as they're saved.
 Unknown keys or invalid values are logged and ignored, and the rest of
 the file still applies.
 
@@ -186,10 +193,8 @@ Items**, and check **Privacy & Security → Accessibility**.
 Named here rather than discovered by you. `requirements/SHIPPING.md` has the
 full list with reasoning.
 
-- **No settings window yet.** The menu bar item covers quitting, the
-  theme, and opening `config.toml`; everything else is edited in the file.
-- **It registers itself as a login item on first launch**, silently, without
-  asking.
+- **No first-run setup yet.** On a fresh install, macOS asks for
+  Accessibility once; after that, Settings → Permissions is the guide.
 - **Window titles for other Spaces can be stale.** Accessibility titles are
   Space-scoped, so a window you haven't visited since renaming shows its old
   title until you do.

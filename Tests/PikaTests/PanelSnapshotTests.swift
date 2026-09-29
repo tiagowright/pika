@@ -1,4 +1,5 @@
 import AppKit
+import SwiftUI
 import Testing
 @testable import Pika
 
@@ -95,6 +96,38 @@ import Testing
                 NSGraphicsContext.restoreGraphicsState()
                 try rep.representation(using: .png, properties: [:])!
                     .write(to: URL(fileURLWithPath: PanelSnapshotTests.outDir!).appendingPathComponent("menubar-\(badged ? "badged" : "plain")-\(name).png"))
+            }
+        }
+    }
+}
+
+@MainActor @Suite struct SettingsSnapshotTests {
+    @Test(.enabled(if: PanelSnapshotTests.outDir != nil)) func render() throws {
+        PikaFont.registerBundled()
+        _ = NSApplication.shared
+        let model = SettingsModel(hotKey: HotKeyManager())
+        for (name, appearance) in [("light", NSAppearance(named: .aqua)!), ("dark", NSAppearance(named: .darkAqua)!)] {
+            for pane in SettingsModel.Pane.allCases where name == "light" || [.permissions, .appearance].contains(pane) {
+                model.pane = pane
+                let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 760, height: 540),
+                                      styleMask: [.titled, .closable, .fullSizeContentView], backing: .buffered, defer: false)
+                window.appearance = appearance
+                window.isReleasedWhenClosed = false
+                window.contentViewController = NSHostingController(rootView: SettingsView(model: model))
+                window.setContentSize(NSSize(width: 760, height: 540))
+                // SwiftUI draws through Core Animation, which cacheDisplay
+                // can't capture: put the window on screen and let the window
+                // server take the picture.
+                window.center()
+                window.orderFrontRegardless()
+                RunLoop.main.run(until: Date().addingTimeInterval(0.6)) // let SwiftUI settle
+                let out = URL(fileURLWithPath: PanelSnapshotTests.outDir!).appendingPathComponent("settings-\(pane.rawValue)-\(name).png")
+                let capture = Process()
+                capture.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+                capture.arguments = ["-x", "-o", "-l", String(window.windowNumber), out.path]
+                try capture.run()
+                capture.waitUntilExit()
+                window.close()
             }
         }
     }

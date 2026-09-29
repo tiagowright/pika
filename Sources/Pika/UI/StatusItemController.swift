@@ -14,6 +14,7 @@ private let log = Logger(subsystem: "io.github.tiagowright.pika", category: "men
 final class StatusItemController: NSObject, NSMenuDelegate {
     private let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
     private let hotKey: HotKeyManager
+    private let openSettings: (SettingsModel.Pane?) -> Void
     private var isBadged: Bool?
 
     private struct Problem {
@@ -23,8 +24,9 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         let perform: () -> Void
     }
 
-    init(hotKey: HotKeyManager) {
+    init(hotKey: HotKeyManager, openSettings: @escaping (SettingsModel.Pane?) -> Void) {
         self.hotKey = hotKey
+        self.openSettings = openSettings
         super.init()
         let menu = NSMenu()
         menu.delegate = self
@@ -57,7 +59,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
                 title: "Grant Accessibility…",
                 detail: "Pika can't list or switch windows without it",
                 badges: true,
-                perform: { Self.openSystemSettings("com.apple.preference.security?Privacy_Accessibility") }
+                perform: { [openSettings] in openSettings(.permissions) }
             ))
         }
 
@@ -67,14 +69,14 @@ final class StatusItemController: NSObject, NSMenuDelegate {
                 title: "Change the hotkey…",
                 detail: "\(config.hotkey) is taken by another app, so it does nothing",
                 badges: true,
-                perform: Self.openConfigFile
+                perform: { [openSettings] in openSettings(.general) }
             ))
         case .shadowedBySystem(let clash):
             result.append(Problem(
-                title: "Open Keyboard Shortcuts…",
+                title: "Fix the hotkey…",
                 detail: "macOS uses \(config.hotkey) for “\(clash)” and gets it first",
                 badges: true,
-                perform: { Self.openSystemSettings("com.apple.Keyboard-Settings.extension") }
+                perform: { [openSettings] in openSettings(.general) }
             ))
         case .ok, .notRegisteredYet:
             break
@@ -87,7 +89,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
                 title: "Allow Chrome tabs…",
                 detail: "Automation for Google Chrome is off, so Chrome is listed by window",
                 badges: false,
-                perform: { Self.openSystemSettings("com.apple.preference.security?Privacy_Automation") }
+                perform: { [openSettings] in openSettings(.permissions) }
             ))
         }
 
@@ -131,8 +133,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         }
 
         menu.addItem(.separator())
-        // Replaced by Settings… (⌘,) once the settings window exists (SETTINGS.md §4 step 5).
-        menu.addItem(ClosureMenuItem(title: "Open config.toml…", keyEquivalent: ",", action: Self.openConfigFile))
+        menu.addItem(ClosureMenuItem(title: "Settings…", keyEquivalent: ",") { [openSettings] in openSettings(nil) })
         menu.addItem(themeMenuItem())
 
         menu.addItem(.separator())

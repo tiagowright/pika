@@ -26,6 +26,13 @@ final class PikaView: NSView {
 
     var onEnter: ((Target) -> Void)?
     var onDismiss: (() -> Void)?
+    var onOpenSettings: (() -> Void)?
+
+    /// `[appearance.cursor] blink`. Off by default: each blink is a redraw
+    /// on an otherwise idle app (UX.md §8). Only runs while the panel is
+    /// visible, and typing holds the cursor solid.
+    private var cursorVisible = true
+    private var blinkTimer: Timer?
 
     init(config: Config, theme: Theme) {
         self.config = config
@@ -122,6 +129,13 @@ final class PikaView: NSView {
         let isControl = flags.contains(.control) && !flags.contains(.command) && !flags.contains(.option)
         let isCommand = flags.contains(.command) && !flags.contains(.control) && !flags.contains(.option)
         let isOption = flags.contains(.option) && !flags.contains(.control) && !flags.contains(.command)
+        restartBlink()
+
+        // ⌘, is Settings everywhere on macOS (SETTINGS.md §1.2 E3).
+        if isCommand, event.charactersIgnoringModifiers == "," {
+            onOpenSettings?()
+            return
+        }
 
         // Delete/Backspace with a modifier: since the query has no
         // interior cursor (arrows navigate rows, not text — see UX.md
@@ -166,6 +180,9 @@ final class PikaView: NSView {
             }
         }
 
+        // An unbound ⌘ combination (⌘W, ⌘A…) is a command, not text.
+        if flags.contains(.command) { return }
+
         guard let chars = event.characters, !chars.isEmpty else { return }
         // Filter out control characters that slipped through (e.g. other
         // Ctrl-combos we don't bind); only accept printable text.
@@ -173,6 +190,30 @@ final class PikaView: NSView {
         guard !printable.isEmpty else { return }
         query.append(String(String.UnicodeScalarView(printable)))
         recomputeResults(preserveSelection: false)
+    }
+
+    // MARK: - Cursor blink
+
+    func startBlinking() {
+        stopBlinking()
+        guard config.cursorBlink else { return }
+        blinkTimer = Timer.scheduledTimer(withTimeInterval: 0.53, repeats: true) { [weak self] _ in
+            guard let self else { return }
+            self.cursorVisible.toggle()
+            self.setNeedsDisplay(NSRect(x: 0, y: 0, width: self.bounds.width, height: self.inputRowHeight))
+        }
+    }
+
+    func stopBlinking() {
+        blinkTimer?.invalidate()
+        blinkTimer = nil
+        cursorVisible = true
+    }
+
+    private func restartBlink() {
+        guard blinkTimer != nil else { return }
+        startBlinking()
+        setNeedsDisplay(NSRect(x: 0, y: 0, width: bounds.width, height: inputRowHeight))
     }
 
     private func deleteLastWord() {
@@ -191,8 +232,23 @@ final class PikaView: NSView {
 
     // MARK: - Mouse
 
+    /// The pika-head mark in the query row. Clicking it opens Settings,
+    /// like the same mark in the menu bar.
+    private var glyphRect: NSRect {
+        NSRect(x: bounds.width - horizontalPadding - glyphSize, y: (inputRowHeight - glyphSize) / 2,
+               width: glyphSize, height: glyphSize)
+    }
+
+    override func resetCursorRects() {
+        addCursorRect(glyphRect.insetBy(dx: -6, dy: -6), cursor: .pointingHand)
+    }
+
     override func mouseDown(with event: NSEvent) {
         let p = convert(event.locationInWindow, from: nil)
+        if glyphRect.insetBy(dx: -6, dy: -6).contains(p) {
+            onOpenSettings?()
+            return
+        }
         guard p.y >= inputRowHeight else { return }
         let visibleStart = scrollOffset()
         let rowIdx = visibleStart + Int((p.y - inputRowHeight) / rowHeight)
@@ -259,15 +315,15 @@ final class PikaView: NSView {
         x += (query as NSString).size(withAttributes: textAttrs).width
 
         // The menu bar icon's mark, so the panel and the icon read as one app.
-        let glyphRect = NSRect(x: bounds.width - horizontalPadding - glyphSize, y: (inputRowHeight - glyphSize) / 2,
-                               width: glyphSize, height: glyphSize)
         PikaGlyph.draw(in: glyphRect, side: glyphSize, color: theme.fgDim, eyes: theme.bgInput)
 
-        // Static block cursor — no blink, per UX.md's "no idle redraws" call.
+        // Block cursor; blinks only if `[appearance.cursor] blink` is on.
         let cursorWidth = font.maximumAdvancement.width
         let cursorRect = NSRect(x: x, y: (inputRowHeight - font.pointSize * 1.15) / 2, width: cursorWidth, height: font.pointSize * 1.15)
-        theme.accent.withAlphaComponent(0.85).setFill()
-        cursorRect.fill()
+        if cursorVisible {
+            theme.accent.withAlphaComponent(0.85).setFill()
+            cursorRect.fill()
+        }
     }
 
     /// `NSString.draw(at:)` takes the *top-left* of the string's box, and

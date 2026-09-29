@@ -131,7 +131,10 @@ Each item shows its tab, control, config key, and notes. Items marked
   It's owned by the OS and **not** stored in the file (**S5**)
 - Show menu bar icon: *deferred* (SHIPPING §10). It needs E2 working first
 
-**Permissions**: the shared permission checklist (§2.3), plus
+**Permissions**: the shared permission checklist (§2.3), showing only the
+real macOS permissions (Accessibility, Chrome Automation). Start at login
+and the hotkey are settings, not permissions, and live in General;
+onboarding still shows all four. Plus
 - Run setup again… (opens onboarding, §2)
 - Reset permissions… (SHIPPING §4.1.5)
 
@@ -359,7 +362,17 @@ Requirements:
    Accessibility is missing. Not yet exercised: the denied → granted
    Chrome path (it needs a real denial, which would reset your grant)
 5. **Settings window**: tabs wired to `ConfigStore` and `PermissionCenter`,
-   plus the hotkey recorder and entry points E1–E3
+   plus the hotkey recorder and entry points E1–E3. ✅ *Done 2026-09-28*:
+   `Sources/Pika/Settings/`. Native SwiftUI in a sidebar layout, Catppuccin
+   tint, JetBrains Mono for keys and the hotkey. The permission checklist
+   is its own component (`PermissionChecklist.swift`) for step 6. Launch at
+   login is no longer registered silently at launch. `cursor.blink`, parsed
+   but never used until now, is implemented. **Constraint found:** SwiftUI's
+   `@State` is a macro whose plugin ships only with Xcode, so view state
+   lives in the `@Observable` `SettingsModel` (Pika builds with the Command
+   Line Tools alone). Reset permissions shows a copyable `tccutil` command;
+   whether Pika may run it itself (Q12) is still untested, because testing
+   it would revoke your real grant
 6. **Onboarding**: Welcome → checklist → try-it, reusing the checklist
    component
 

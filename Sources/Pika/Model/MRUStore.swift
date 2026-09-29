@@ -37,6 +37,13 @@ final class MRUStore {
         scheduleSave()
     }
 
+    /// Settings → Privacy & data. Windows open right now keep the recency
+    /// already in the index until they're next rebuilt.
+    func forgetAll() {
+        lock.lock(); recency = [:]; lock.unlock()
+        scheduleSave()
+    }
+
     private func scheduleSave() {
         writeWorkItem?.cancel()
         let item = DispatchWorkItem { [weak self] in self?.save() }

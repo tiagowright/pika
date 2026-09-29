@@ -24,6 +24,8 @@ final class PanelController {
     private var config: Config { ConfigStore.shared.config }
 
     private(set) var isVisible = false
+    /// Set by the app delegate: ⌘, in the panel opens Settings.
+    var onOpenSettings: (() -> Void)?
 
     private init() {}
 
@@ -51,6 +53,13 @@ final class PanelController {
 
         view.onEnter = { [weak self] target in self?.select(target) }
         view.onDismiss = { [weak self] in self?.hide() }
+        view.onOpenSettings = { [weak self] in
+            // Open first, while this panel still holds the user's keypress:
+            // macOS only lets an app bring itself forward in response to
+            // the user, and hiding first hands focus back to the other app.
+            self?.onOpenSettings?()
+            self?.hide()
+        }
 
         self.panel = panel
         self.view = view
@@ -84,6 +93,7 @@ final class PanelController {
             ChromeTabSource.shared.setEnabled(new.chromeTabs)
         }
         if isVisible {
+            if new.cursorBlink != old.cursorBlink { view.startBlinking() }
             view.refresh()
             layout()
         }
@@ -100,11 +110,13 @@ final class PanelController {
         panel.orderFrontRegardless()
         panel.makeKey()
         panel.makeFirstResponder(view)
+        view.startBlinking()
         isVisible = true
     }
 
     func hide() {
         panel.orderOut(nil)
+        view.stopBlinking()
         isVisible = false
     }
 

@@ -130,3 +130,16 @@ import Testing
         #expect((try? Config.parseHotkey("shift+a").get()) == nil)
     }
 }
+
+@Suite struct HotkeyStringTests {
+    @Test func roundTripsThroughParse() throws {
+        for (code, cmd, ctrl, opt, shift) in [(UInt32(49), false, true, false, false), (40, true, false, false, true), (122, false, true, true, false), (42, true, false, false, false)] {
+            let s = try #require(Config.hotkeyString(keyCode: code, command: cmd, control: ctrl, option: opt, shift: shift))
+            let parsed = try Config.parseHotkey(s).get()
+            #expect(parsed.keyCode == code, "\(s)")
+        }
+        #expect(Config.hotkeyString(keyCode: 49, command: false, control: true, option: false, shift: false) == "ctrl+space")
+        #expect(Config.hotkeyString(keyCode: 40, command: true, control: false, option: false, shift: true) == "shift+cmd+k")
+        #expect(Config.hotkeyString(keyCode: 999, command: true, control: false, option: false, shift: false) == nil)
+    }
+}

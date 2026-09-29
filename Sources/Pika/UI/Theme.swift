@@ -74,9 +74,14 @@ extension NSColor {
 enum PikaFont {
     static let family = "JetBrains Mono"
 
+    private static var registered = false
+
     /// Registers the bundled JetBrains Mono so it's available even on a
     /// machine that never installed it (UX.md: "bundled with the app").
+    /// Idempotent; the settings window needs it before the panel exists.
     static func registerBundled() {
+        guard !registered else { return }
+        registered = true
         guard let url = Bundle.module.url(forResource: "JetBrainsMono", withExtension: "ttf") else { return }
         CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil)
     }
