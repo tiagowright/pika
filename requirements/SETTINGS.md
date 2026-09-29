@@ -333,7 +333,10 @@ Requirements:
    the banner arrive with steps 3 and 5
 2. **Theme**: add Latte, the Auto/Dark/Light switch, and live repaint (§3).
    It's small and gives a visible result quickly, and it tests
-   `ConfigStore` end to end
+   `ConfigStore` end to end. ✅ *Done 2026-09-28*: `UI/Appearance.swift`,
+   contrast floors in `ThemeContrastTests`, and an opt-in panel render
+   (`PIKA_SNAPSHOT_DIR=… swift test --filter PanelSnapshotTests`). The
+   menu bar Theme submenu arrives with step 3
 3. **Menu bar status item**: the short menu, badge, and Quit (§1.5)
 4. **Permission model**: a `PermissionCenter` that reports live state for
    the four items, the `AEDeterminePermissionToAutomateTarget` check, the

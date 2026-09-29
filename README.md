@@ -134,6 +134,7 @@ the file still applies.
 hotkey = "ctrl+space"        # "cmd+shift+k", "alt+space", …
 
 [appearance]
+theme        = "auto"        # auto (follow macOS), dark, or light
 font_size    = 13
 width        = 680
 max_rows     = 10
@@ -152,10 +153,10 @@ include_current = false      # list the window you're already in
 chrome_tabs = true
 ```
 
-The current file also contains `theme` and `font` keys. **Those are not
-read yet** — the theme is fixed to Catppuccin Mocha and the font to the
-bundled JetBrains Mono. They're written as placeholders; editing them does
-nothing today.
+`dark` is Catppuccin Mocha and `light` is Catppuccin Latte. `auto` follows
+macOS and switches live when the system does. The font is always the
+bundled JetBrains Mono; an older config's `font` key is reported as
+ignored and can be deleted.
 
 ## Uninstall
 
@@ -181,7 +182,6 @@ full list with reasoning.
   Quitting means Activity Monitor or `pkill`.
 - **It registers itself as a login item on first launch**, silently, without
   asking.
-- **`theme` and `font` config keys are ignored**, as described above.
 - **A failed hotkey registration isn't reported.** If `Ctrl+Space` is taken,
   Pika starts and simply never opens.
 - **Window titles for other Spaces can be stale.** Accessibility titles are
@@ -199,4 +199,4 @@ Bundled third-party work, with full notices in
   [`Sources/Pika/Resources/JetBrainsMono-OFL.txt`](Sources/Pika/Resources/JetBrainsMono-OFL.txt)
   and is copied into the `.app` bundle, as the OFL requires.
   
-**Catppuccin** (MIT) for the color palette in `Theme.swift`.
+**Catppuccin** (MIT) for the Mocha and Latte palettes in `Theme.swift`.

@@ -11,7 +11,7 @@ struct Config: Equatable {
     var hotkeyKeyCode: UInt32 = UInt32(kVK_Space)
     var hotkeyModifiers: UInt32 = UInt32(controlKey)
 
-    var theme = Theme.catppuccinMocha
+    var themeMode: ThemeMode = .auto
     var fontSize: CGFloat = 13
     var inputFontSize: CGFloat = 15
     var panelWidth: CGFloat = 680
@@ -34,7 +34,7 @@ struct Config: Equatable {
     hotkey = "ctrl+space"        # modifiers (ctrl, cmd, alt, shift) + key, e.g. "cmd+shift+k"
 
     [appearance]
-    theme        = "catppuccin-mocha"
+    theme        = "auto"        # auto (follow macOS), dark, or light
     font_size    = 13            # 9–24
     width        = 680           # panel width in points, 400–1600
     max_rows     = 10            # 3–30
@@ -130,6 +130,13 @@ struct Config: Equatable {
                 issues.append(ConfigIssue(line: entry.line, message: "hotkey \"\(v)\": \(problem.message) — using \"\(cfg.hotkey)\""))
             }
         }
+        if let v = string("appearance.theme"), let entry = values["appearance.theme"]?.entry {
+            if let mode = themeAliases[v.lowercased()] {
+                cfg.themeMode = mode
+            } else {
+                issues.append(ConfigIssue(line: entry.line, message: "`appearance.theme = \(entry.literal)` should be auto, dark, or light — using auto"))
+            }
+        }
         if let v = number("appearance.font_size") {
             cfg.fontSize = CGFloat(v)
             cfg.inputFontSize = CGFloat(v) + 2
@@ -147,6 +154,12 @@ struct Config: Equatable {
         issues.sort { ($0.line ?? .max) < ($1.line ?? .max) }
         return (cfg, issues)
     }
+
+    /// The flavour names are what older default files wrote.
+    private static let themeAliases: [String: ThemeMode] = [
+        "auto": .auto, "dark": .dark, "light": .light,
+        "catppuccin-mocha": .dark, "catppuccin-latte": .light,
+    ]
 
     struct Problem: Error { let message: String }
 

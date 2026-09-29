@@ -163,22 +163,24 @@ It applies to query *prefixes* too, so learning `slack` also improves `s`, `sl`,
 
 ## 7. Theme
 
-Catppuccin Mocha as the shipped default. Every colour is a named token so a config file can swap the whole palette (Latte/Frappé/Macchiato, or anything else) without touching code.
+Catppuccin Mocha (dark) and Latte (light), chosen by `theme = "auto" | "dark" | "light"`; `auto`, the default, follows macOS live. Every colour is a named token, so drawing code never names a colour.
 
-| Token | Mocha | Used for |
-|---|---|---|
-| `bg` | `#1e1e2e` base | Panel background |
-| `bg_input` | `#181825` mantle | Query row background |
-| `border` | `#45475a` surface1 | Panel border, separator |
-| `fg` | `#cdd6f4` text | Window/tab title |
-| `fg_dim` | `#7f849c` overlay1 | Recency column, app name of unselected rows |
-| `fg_muted` | `#6c7086` overlay0 | Empty-state text, placeholder |
-| `accent` | `#cba6f7` mauve | Prompt glyph, selection bar, matched characters |
-| `accent_alt` | `#89b4fa` blue | App-name column |
-| `sel_bg` | `#313244` surface0 | Selected row background |
-| `warn` | `#f9e2af` yellow | Degraded-source indicator |
+| Token | Mocha | Latte | Used for |
+|---|---|---|---|
+| `bg` | `#1e1e2e` base | `#eff1f5` base | Panel background |
+| `bg_input` | `#181825` mantle | `#e6e9ef` mantle | Query row background |
+| `border` | `#45475a` surface1 | `#9ca0b0` **overlay0** | Panel border, separator |
+| `fg` | `#cdd6f4` text | `#4c4f69` text | Window/tab title |
+| `fg_dim` | `#7f849c` overlay1 | `#6c6f85` **subtext0** | Recency column, app name of unselected rows |
+| `fg_muted` | `#6c7086` overlay0 | `#7c7f93` **overlay2** | Empty-state text, placeholder |
+| `accent` | `#cba6f7` mauve | `#8839ef` mauve | Prompt glyph, selection bar, matched characters (semibold) |
+| `accent_alt` | `#89b4fa` blue | `#1e66f5` blue | App-name column |
+| `sel_bg` | `#313244` surface0 | `#d8dae1` **overlay2 @ 20% over base** | Selected row background |
+| `warn` | `#f9e2af` yellow | `#df8e1d` yellow | Degraded-source indicator — never colour alone (Latte yellow is 2.3:1) |
 
-> Verified against `catppuccin/palette` on 2026-09-21: all ten values match Mocha exactly.
+**Bold** Latte roles differ from Mocha on purpose: Latte's overlays sit much closer to its background, so the same roles fail contrast. Reasoning in `SETTINGS.md` §3.2; floors enforced by `Tests/PikaTests/ThemeContrastTests.swift`.
+
+> Verified against `catppuccin/palette`: Mocha on 2026-09-21, Latte on 2026-09-28.
 
 Config sketch (`~/.config/pika/config.toml`):
 
@@ -186,8 +188,7 @@ Config sketch (`~/.config/pika/config.toml`):
 hotkey = "ctrl+space"
 
 [appearance]
-theme        = "catppuccin-mocha"   # or a [colors] table below
-font         = "JetBrains Mono"   # bundled
+theme        = "auto"             # auto | dark | light
 font_size    = 13
 width        = 680
 max_rows     = 10

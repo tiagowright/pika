@@ -66,6 +66,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func startEverything() {
         let store = ConfigStore.shared
         store.startWatching()
+        Appearance.shared.start()
         PanelController.shared.prewarm()
         hotKeyManager.onPressed = { PanelController.shared.toggle() }
         hotKeyManager.register(keyCode: store.config.hotkeyKeyCode, modifiers: store.config.hotkeyModifiers)

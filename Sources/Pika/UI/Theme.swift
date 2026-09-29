@@ -1,8 +1,15 @@
 import AppKit
 import CoreText
 
-/// Catppuccin Mocha, as named tokens per UX.md §7 so a config file can
-/// swap the whole palette without touching drawing code.
+/// `[appearance] theme` in config.toml.
+enum ThemeMode: String, CaseIterable {
+    case auto   // follow macOS
+    case dark   // Catppuccin Mocha
+    case light  // Catppuccin Latte
+}
+
+/// Catppuccin, as named tokens per UX.md §7 so drawing code never names
+/// a colour directly.
 struct Theme: Equatable {
     var bg: NSColor
     var bgInput: NSColor
@@ -27,6 +34,32 @@ struct Theme: Equatable {
         selBg:     NSColor(hex: 0x313244),
         warn:      NSColor(hex: 0xf9e2af)
     )
+
+    /// Latte's overlays sit much closer to its background than Mocha's do,
+    /// so mapping each token to the same Catppuccin role as Mocha fails
+    /// contrast (2.8:1 for dim text). Where the roles differ from Mocha,
+    /// the choice is explained in SETTINGS.md §3.2 and pinned by
+    /// ThemeContrastTests.
+    static let catppuccinLatte = Theme(
+        bg:        NSColor(hex: 0xeff1f5), // base
+        bgInput:   NSColor(hex: 0xe6e9ef), // mantle
+        border:    NSColor(hex: 0x9ca0b0), // overlay0 — surface1 vanishes against a light window behind
+        fg:        NSColor(hex: 0x4c4f69), // text
+        fgDim:     NSColor(hex: 0x6c6f85), // subtext0 — same contrast as Mocha's overlay1
+        fgMuted:   NSColor(hex: 0x7c7f93), // overlay2 — same contrast as Mocha's overlay0
+        accent:    NSColor(hex: 0x8839ef), // mauve
+        accentAlt: NSColor(hex: 0x1e66f5), // blue
+        selBg:     NSColor(hex: 0xd8dae1), // overlay2 at 20% over base, per the style guide
+        warn:      NSColor(hex: 0xdf8e1d)  // yellow — under 3:1, so never used as colour alone
+    )
+
+    static func resolve(_ mode: ThemeMode, systemIsDark: Bool) -> Theme {
+        switch mode {
+        case .dark: return .catppuccinMocha
+        case .light: return .catppuccinLatte
+        case .auto: return systemIsDark ? .catppuccinMocha : .catppuccinLatte
+        }
+    }
 }
 
 extension NSColor {
@@ -50,8 +83,14 @@ enum PikaFont {
 
     static func font(size: CGFloat, weight: NSFont.Weight = .regular) -> NSFont {
         // Look up by family (not PostScript name) — the bundled file is a
-        // variable font, and its exact PS name isn't worth hardcoding.
-        let descriptor = NSFontDescriptor(fontAttributes: [.family: family])
+        // variable font, and its exact PS name isn't worth hardcoding. A
+        // weight trait selects one of its named instances (SemiBold etc.),
+        // which keep the same advance width, so columns don't shift.
+        var attributes: [NSFontDescriptor.AttributeName: Any] = [.family: family]
+        if weight != .regular {
+            attributes[.traits] = [NSFontDescriptor.TraitKey.weight: weight]
+        }
+        let descriptor = NSFontDescriptor(fontAttributes: attributes)
         if let f = NSFont(descriptor: descriptor, size: size) { return f }
         return NSFont.monospacedSystemFont(ofSize: size, weight: weight)
     }

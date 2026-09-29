@@ -22,10 +22,12 @@ modified version would have to be renamed.
 
 ---
 
-## Catppuccin (Mocha palette)
+## Catppuccin (Mocha and Latte palettes)
 
 The colour values in `Sources/Pika/UI/Theme.swift` are the Catppuccin Mocha
-palette, verified against the upstream palette definition.
+and Latte palettes, verified against the upstream palette definition. One
+Latte token, the selected-row background, is overlay2 blended at 20% over
+base, as the Catppuccin style guide describes for selections.
 
 - Upstream: <https://github.com/catppuccin/catppuccin>
 - Licence: MIT

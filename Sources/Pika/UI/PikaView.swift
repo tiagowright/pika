@@ -8,6 +8,9 @@ final class PikaView: NSView {
     var config: Config {
         didSet { needsDisplay = true }
     }
+    var theme: Theme {
+        didSet { needsDisplay = true }
+    }
     private var query: String = ""
     private var results: [ScoredTarget] = []
     private var selectedID: TargetID?
@@ -23,8 +26,9 @@ final class PikaView: NSView {
     var onEnter: ((Target) -> Void)?
     var onDismiss: (() -> Void)?
 
-    init(config: Config) {
+    init(config: Config, theme: Theme) {
         self.config = config
+        self.theme = theme
         super.init(frame: .zero)
         wantsLayer = true
     }
@@ -210,7 +214,6 @@ final class PikaView: NSView {
     // MARK: - Drawing
 
     override func draw(_ dirtyRect: NSRect) {
-        let theme = config.theme
         theme.bg.setFill()
         bounds.fill()
 
@@ -289,6 +292,7 @@ final class PikaView: NSView {
         }
 
         let font = PikaFont.font(size: config.fontSize)
+        let matchFont = PikaFont.font(size: config.fontSize, weight: .semibold)
         var x = horizontalPadding
 
         if config.showIcons {
@@ -303,7 +307,7 @@ final class PikaView: NSView {
         drawHighlighted(
             scored.target.appName, matched: matchedInAppName(scored),
             at: NSPoint(x: appColX, y: textY),
-            font: font, baseColor: isSelected ? theme.accentAlt : theme.fgDim, highlightColor: theme.accent,
+            font: font, matchFont: matchFont, baseColor: isSelected ? theme.accentAlt : theme.fgDim, highlightColor: theme.accent,
             maxWidth: appColumnWidth - 8
         )
 
@@ -316,7 +320,7 @@ final class PikaView: NSView {
         drawHighlighted(
             scored.target.title, matched: matchedInTitle(scored),
             at: NSPoint(x: titleX, y: textY),
-            font: font, baseColor: theme.fg, highlightColor: theme.accent,
+            font: font, matchFont: matchFont, baseColor: theme.fg, highlightColor: theme.accent,
             maxWidth: titleMaxWidth
         )
 
@@ -337,8 +341,10 @@ final class PikaView: NSView {
 
     /// Middle-truncates long titles keeping head and tail per UX.md §9
     /// ("the tail usually holds the filename"), then draws with matched
-    /// byte offsets recolored to the accent.
-    private func drawHighlighted(_ text: String, matched: Set<Int>, at point: NSPoint, font: NSFont, baseColor: NSColor, highlightColor: NSColor, maxWidth: CGFloat) {
+    /// byte offsets recolored to the accent. Matched characters are also
+    /// semibold, so the match doesn't rest on hue alone — Latte's mauve on
+    /// the selected row is only ~3.9:1 (SETTINGS.md §3.2).
+    private func drawHighlighted(_ text: String, matched: Set<Int>, at point: NSPoint, font: NSFont, matchFont: NSFont, baseColor: NSColor, highlightColor: NSColor, maxWidth: CGFloat) {
         guard maxWidth > 0 else { return }
         let attrString = NSMutableAttributedString(string: text, attributes: [.font: font, .foregroundColor: baseColor])
         for i in matched where i < text.utf8.count {
@@ -346,7 +352,7 @@ final class PikaView: NSView {
             // for v1 (US-keyboard, mostly-ASCII titles) this lines up with
             // NSString UTF-16 offsets closely enough for highlighting.
             if i < attrString.length {
-                attrString.addAttribute(.foregroundColor, value: highlightColor, range: NSRange(location: i, length: 1))
+                attrString.addAttributes([.foregroundColor: highlightColor, .font: matchFont], range: NSRange(location: i, length: 1))
             }
         }
 

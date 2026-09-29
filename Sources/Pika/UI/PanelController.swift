@@ -41,12 +41,12 @@ final class PanelController {
         panel.isOpaque = false
         panel.hidesOnDeactivate = false
 
-        let view = PikaView(config: config)
+        let view = PikaView(config: config, theme: Appearance.shared.theme)
         view.wantsLayer = true
         view.layer?.cornerRadius = 6
         view.layer?.masksToBounds = true
         view.layer?.borderWidth = 1
-        view.layer?.borderColor = config.theme.border.cgColor
+        view.layer?.borderColor = view.theme.border.cgColor
         panel.contentView = view
 
         view.onEnter = { [weak self] target in self?.select(target) }
@@ -67,6 +67,12 @@ final class PanelController {
         LearnedStore.shared.decayAll()
 
         ConfigStore.shared.observe { [weak self] old, new in self?.apply(old: old, new: new) }
+        Appearance.shared.observe { [weak self] theme in self?.apply(theme) }
+    }
+
+    private func apply(_ theme: Theme) {
+        view.theme = theme
+        view.layer?.borderColor = theme.border.cgColor
     }
 
     /// Applies a changed config to the live, prewarmed panel. The panel is
@@ -74,7 +80,6 @@ final class PanelController {
     /// to show).
     private func apply(old: Config, new: Config) {
         view.config = new
-        view.layer?.borderColor = new.theme.border.cgColor
         if new.chromeTabs != old.chromeTabs {
             ChromeTabSource.shared.setEnabled(new.chromeTabs)
         }
