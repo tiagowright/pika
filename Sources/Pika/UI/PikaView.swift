@@ -125,6 +125,7 @@ final class PikaView: NSView {
     // MARK: - Keyboard
 
     override func keyDown(with event: NSEvent) {
+        LatencyProbe.begin(event.keyCode == 36 ? .enter : .keystroke, eventTime: event.timestamp)
         let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
         let isControl = flags.contains(.control) && !flags.contains(.command) && !flags.contains(.option)
         let isCommand = flags.contains(.command) && !flags.contains(.control) && !flags.contains(.option)

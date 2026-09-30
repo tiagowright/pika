@@ -1,19 +1,18 @@
 # Pika
 
-Pika is a blazing-fast, keyboard-first window finder for macOS.
+Pika is a blazing-fast, keyboard-first window finder for macOS. To switch
+to any window, press ctrl+space, type a few letters, then Enter.
 
 TK: screenshots
 
-Pika brings the fast, fuzzy **Command-P** file-switching pattern from editors
+Pika brings the fast, fuzzy file-switching pattern from editors
 such as Zed and VS Code to the windows you already have open. Press a hotkey,
 type a couple of letters from an app or window title, then press `Enter` to
 jump to that exact window. Pika lists open windows across Spaces and, when
-enabled, individual Chrome tabs. Ghostty's native tabs appear as windows.
-
-**Local by design.** Pika reads window titles through macOS Accessibility so
-it can find and raise the window you choose. It sends nothing over the network;
-the local data it stores—including the sensitive parts—is described in
-[Privacy and local data](#privacy-and-local-data).
+enabled, individual Chrome tabs. It is blazing fast, even with a hundred
+open windows and tabs, responding in under 30ms to most keypress, far faster
+than humans can perceive. The app is local by design, and your data
+never leaves your machine.
 
 It is keyboard driven:
 `Ctrl+Space` brings up the switcher, which allows you to search for
@@ -29,16 +28,23 @@ characters landed on word beginnings.
 ## Blazing fast
 
 Pika was architected to make window switching feel as immediate as editor file
-switching. Open apps, windows, and Chrome tabs are indexed off the UI path and
+switching, even with a hundred windows and tabs open. 
+Open apps, windows, and Chrome tabs are indexed off the UI path and
 updated in the background. When the switcher opens, it searches an in-memory
 snapshot—never waiting for Accessibility or Chrome—so each keystroke can update
 the matches immediately.
 
-| Interaction | Average response |
-|---|---:|
-| Hotkey → visible switcher | `TK ms` |
-| Keystroke → updated results | `TK ms` |
-| `Enter` → switcher dismissed | `TK ms` |
+| Interaction | Mean | p90 |
+|---|---:|---:|
+| Hotkey → visible switcher | 11.6 ms | 15.0 ms |
+| Keystroke → updated results | 12.9 ms | 19.6 ms |
+| `Enter` → switcher dismissed | 3.8 ms | 5.9 ms |
+
+Measured on an Apple M5 running macOS 26.6.2, release build, over 200
+rounds of hotkey → four letters → four backspaces → `Enter` (1,600
+keystrokes). Each time runs from the key event's timestamp until the frame
+is handed to the window server; the display shows it at its next refresh.
+Reproduce with `bench/latency.sh`.
 
 ## Keys
 
@@ -65,18 +71,18 @@ clear it. Or record a different hotkey in Settings → General.
 
 ## Menu bar and Settings
 
-Pika's menu bar icon (a leaping pika) is how you quit, switch the theme, and
-open Settings. An orange dot on it means something needs you — a
+Settings are available from the "leaping pika" icon in the menu bar, or the
+same icon in the switcher, or through the `⌘,` shortcut. 
+You can configure the hotkeys, inspect the 
+permissions, change appearance, switch to dark mode, change how the window
+search ranking works and more.
+
+An orange dot on the menu bar means something needs you — a
 missing permission, a hotkey that won't fire, or a config line Pika
 couldn't use — and the menu says what and links to the fix.
 
-Settings (`⌘,` from the menu or from the switcher) has every option in
-`config.toml`, a hotkey recorder, and a Permissions page showing what's
-granted and how to fix what isn't. If the notch hides the menu bar icon,
-open Pika.app again from Spotlight or Finder: while Pika is running, that
-opens Settings. While Settings or first-run setup is open, Pika shows in
-the Dock and in ⌘Tab like any app, so you can go to System Settings and
-come back; it disappears from both again when you close the window.
+All settings are stored in `~/.config/pika/config.toml`, so you can 
+always rely on your text editor as well.
 
 ## Permissions
 
@@ -118,7 +124,9 @@ unified log. Do not attach Pika logs to a bug report without reviewing them.
 button, and can clear recency, forget learned queries, or delete the icon
 cache. To remove all local data, use the uninstall instructions below.
 
-## Build and install
+## Install
+
+TK: screenshot of the setup wizard
 
 No downloadable installers available yet. The app is currently for those
 ready to install from github. Tested on macOS 26, Apple Silicon, with 
@@ -140,6 +148,15 @@ Accessibility (required), Chrome tabs and starting at login (both
 optional, each with a Skip), and a check that your hotkey works. It ends
 by having you press the hotkey once. Run it again any time from
 Settings → Permissions → *Run Setup Again*.
+
+## Uninstall
+
+```sh
+./uninstall.sh              # add --keep-data to keep your config and history
+```
+
+Then remove the leftover entry under **System Settings → General → Login
+Items**, and check **Privacy & Security → Accessibility**.
 
 ## Rebuilding Pika
 
@@ -167,50 +184,6 @@ Screenshot tests of the switcher, the menu bar icon, Settings, and setup
 are opt-in: set `PIKA_SNAPSHOT_DIR` to a folder, and they write PNGs there.
 The Settings and setup ones briefly put windows on screen.
 
-## Configuration
-
-`~/.config/pika/config.toml`, created with defaults on first launch.
-Settings reads and writes this file (keeping your comments), and Pika
-watches it, so edits made either way apply as soon as they're saved.
-Unknown keys or invalid values are logged and ignored, and the rest of
-the file still applies.
-
-```toml
-hotkey = "ctrl+space"        # "cmd+shift+k", "alt+space", …
-
-[appearance]
-theme        = "auto"        # auto (follow macOS), dark, or light
-font_size    = 13
-width        = 680
-max_rows     = 10
-show_icons   = true
-
-[appearance.cursor]
-blink = false
-
-[ranking]
-recency_weight  = 40         # how much recency nudges a match
-learning        = true       # remember which target you pick per query
-learn_weight    = 60
-include_current = false      # list the window you're already in
-
-[sources]
-chrome_tabs = true
-```
-
-`dark` is Catppuccin Mocha and `light` is Catppuccin Latte. `auto` follows
-macOS and switches live when the system does. The font is always the
-bundled JetBrains Mono; an older config's `font` key is reported as
-ignored and can be deleted.
-
-## Uninstall
-
-```sh
-./uninstall.sh              # add --keep-data to keep your config and history
-```
-
-Then remove the leftover entry under **System Settings → General → Login
-Items**, and check **Privacy & Security → Accessibility**.
 
 ## Known rough edges
 
