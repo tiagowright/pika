@@ -6,10 +6,15 @@ import SwiftUI
 /// the state it's in (SETTINGS.md §2.3). Shown in Settings → Permissions
 /// and, in step 6, in onboarding.
 struct PermissionChecklist: View {
-    enum Item: CaseIterable { case accessibility, chrome, loginItem, hotkey }
+    enum Item: String, CaseIterable {
+        case accessibility, chrome, loginItem, hotkey
+        var id: String { rawValue }
+    }
 
     @Bindable var model: SettingsModel
     var items: [Item] = Item.allCases
+    /// Onboarding offers "Skip" on optional rows that aren't done yet.
+    var allowSkip = false
     /// Where a hotkey "Change…" button should take the user.
     var onChangeHotkey: () -> Void
 
@@ -19,8 +24,8 @@ struct PermissionChecklist: View {
                 if index > 0 { Divider() }
                 switch item {
                 case .accessibility: AccessibilityRow(model: model)
-                case .chrome: ChromeRow(model: model)
-                case .loginItem: LoginItemRow(model: model)
+                case .chrome: ChromeRow(model: model, allowSkip: allowSkip)
+                case .loginItem: LoginItemRow(model: model, allowSkip: allowSkip)
                 case .hotkey: HotkeyRow(model: model, onChange: onChangeHotkey)
                 }
             }
@@ -165,9 +170,12 @@ private struct AccessibilityRow: View {
 
 private struct ChromeRow: View {
     @Bindable var model: SettingsModel
+    var allowSkip = false
 
     var body: some View {
-        let (status, text) = describe()
+        let (status, text) = model.isSkipped(.chrome) && !model.config.chromeTabs
+            ? (RowStatus.neutral, "Skipped — Chrome is listed by window. Turn on any time in Settings → Sources.")
+            : describe()
         ChecklistRow(
             title: "Chrome tabs (Automation)",
             required: false,
@@ -205,20 +213,27 @@ private struct ChromeRow: View {
         if !model.config.chromeTabs {
             Button("Turn On") { model.set("sources", "chrome_tabs", .bool(true)) }
         } else {
-            switch model.chrome.grant {
-            case .denied:
-                Button("Open System Settings…") { StatusItemController.openSystemSettings(SystemSettingsPane.automation) }
-                    .buttonStyle(.borderedProminent)
-            case .notAsked, nil:
-                if case .notAsked = model.chrome {
-                    Button("Allow…") { model.requestChromeAccess() }
-                        .buttonStyle(.borderedProminent)
-                } else if case .chromeNotRunning = model.chrome {
-                    Button("Open Chrome") { model.openChrome() }
-                }
-            case .granted:
-                EmptyView()
+            chromeActions
+            if allowSkip, model.chrome.grant != .granted {
+                Button("Skip") { model.skip(.chrome) }.buttonStyle(.link)
             }
+        }
+    }
+
+    @ViewBuilder private var chromeActions: some View {
+        switch model.chrome.grant {
+        case .denied:
+            Button("Open System Settings…") { StatusItemController.openSystemSettings(SystemSettingsPane.automation) }
+                .buttonStyle(.borderedProminent)
+        case .notAsked, nil:
+            if case .notAsked = model.chrome {
+                Button("Allow…") { model.requestChromeAccess() }
+                    .buttonStyle(.borderedProminent)
+            } else if case .chromeNotRunning = model.chrome {
+                Button("Open Chrome") { model.openChrome() }
+            }
+        case .granted:
+            EmptyView()
         }
     }
 }
@@ -227,10 +242,13 @@ private struct ChromeRow: View {
 
 private struct LoginItemRow: View {
     @Bindable var model: SettingsModel
+    var allowSkip = false
 
     var body: some View {
+        let skipped = model.isSkipped(.loginItem) && model.loginItem == .off
         let (status, text): (RowStatus, String) = switch model.loginItem {
         case .on: (.good, "On")
+        case .off where skipped: (.neutral, "Skipped — turn on any time in Settings → General")
         case .off: (.neutral, "Off — start Pika yourself after logging in")
         case .needsApproval: (.attention, "Waiting for your approval in System Settings → Login Items")
         case .unavailable: (.neutral, "Only available when Pika runs from /Applications")
@@ -244,7 +262,12 @@ private struct LoginItemRow: View {
         ) {
             switch model.loginItem {
             case .on: Button("Turn Off") { model.setLaunchAtLogin(false) }
-            case .off: Button("Turn On") { model.setLaunchAtLogin(true) }
+            case .off:
+                Button("Turn On") { model.setLaunchAtLogin(true) }
+                    .buttonStyle(.borderedProminent)
+                if allowSkip, !skipped {
+                    Button("Skip") { model.skip(.loginItem) }.buttonStyle(.link)
+                }
             case .needsApproval:
                 Button("Open Login Items…") { StatusItemController.openSystemSettings(SystemSettingsPane.loginItems) }
                     .buttonStyle(.borderedProminent)

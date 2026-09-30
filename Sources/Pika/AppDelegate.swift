@@ -9,14 +9,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var activityToken: NSObjectProtocol?
     private var statusItem: StatusItemController?
     private var started = false
-    private lazy var settings = SettingsWindowController(hotKey: hotKeyManager)
+    private lazy var settingsModel: SettingsModel = {
+        let model = SettingsModel(hotKey: hotKeyManager)
+        model.runSetupAgain = { [weak self] in self?.onboarding.show() }
+        return model
+    }()
+    private lazy var settings = SettingsWindowController(model: settingsModel)
+    private lazy var onboarding = OnboardingWindowController(model: settingsModel)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory) // no Dock icon, no menu bar — LSUIElement equivalent (TECHNICAL.md §3)
         NSApp.mainMenu = Self.makeMainMenu()
         disableAppNap()
-        // Launch at login is no longer registered silently here: only from
-        // Settings (and, in step 6, onboarding) — SETTINGS.md §2.4.6.
+        // Launch at login is never registered silently: only from
+        // onboarding or Settings (SETTINGS.md §2.4.6).
+
+        // Neither needs Accessibility, and onboarding runs before it's granted.
+        ConfigStore.shared.startWatching()
+        Appearance.shared.start()
 
         // Before the Accessibility check: the menu is how a user who hasn't
         // granted it yet finds out, and how they quit.
@@ -29,14 +39,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         permissions.start()
 
-        if permissions.accessibility {
-            startEverything()
-        } else {
-            // Shows the system prompt the first time only. PermissionCenter
-            // polls until the grant lands, then startEverything runs.
-            let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
-            _ = AXIsProcessTrustedWithOptions(options)
-        }
+        if permissions.accessibility { startEverything() }
+
+        // No system prompt at launch: onboarding explains first, and its
+        // Accessibility row asks. PermissionCenter polls until the grant
+        // lands, then startEverything runs.
+        if Onboarding.isDue { onboarding.show() }
     }
 
     /// Opening Pika.app again while it's running — from Finder, Spotlight,
@@ -44,14 +52,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// the notch can hide, it's the way in that always works (SETTINGS.md
     /// §1.2 E2).
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        openSettings(nil)
+        if onboarding.isOpen { onboarding.show(resetting: false) } else { openSettings(nil) }
         return false
     }
 
-    /// Never shown (Pika is an accessory app), but its key equivalents
-    /// still work in Pika's windows: ⌘W closes Settings, ⌘C copies the
-    /// troubleshooting command. No ⌘Q: quitting Pika by reflex would
-    /// silently kill the hotkey; Quit lives in the menu bar item.
+    /// Visible only while Setup or Settings is open (AppPresence); its key
+    /// equivalents work in Pika's windows either way: ⌘W closes, ⌘C copies
+    /// the troubleshooting command. Quit has no ⌘Q: quitting by reflex to
+    /// dismiss a window would silently kill the hotkey.
     private static func makeMainMenu() -> NSMenu {
         let main = NSMenu()
         func submenu(_ title: String, _ items: [NSMenuItem]) {
@@ -61,7 +69,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             item.submenu = menu
             main.addItem(item)
         }
-        submenu("Pika", [])
+        submenu("Pika", [
+            NSMenuItem(title: "Hide Pika", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h"),
+            .separator(),
+            NSMenuItem(title: "Quit Pika", action: #selector(NSApplication.terminate(_:)), keyEquivalent: ""),
+        ])
         submenu("File", [NSMenuItem(title: "Close", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")])
         submenu("Edit", [
             NSMenuItem(title: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x"),
@@ -71,6 +83,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         ])
         submenu("Window", [NSMenuItem(title: "Minimize", action: #selector(NSWindow.performMiniaturize(_:)), keyEquivalent: "m")])
         return main
+    }
+
+    /// On onboarding's last page, pressing the hotkey is the lesson: it
+    /// finishes setup and shows the real switcher.
+    private func hotkeyPressed() {
+        if onboarding.isWaitingForHotkey {
+            onboarding.finish()
+            PanelController.shared.show()
+            return
+        }
+        PanelController.shared.toggle()
     }
 
     private func openSettings(_ pane: SettingsModel.Pane?) {
@@ -93,12 +116,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard !started else { return }
         started = true
         let store = ConfigStore.shared
-        store.startWatching()
-        Appearance.shared.start()
         PanelController.shared.prewarm()
-        hotKeyManager.onPressed = { PanelController.shared.toggle() }
+        hotKeyManager.onPressed = { [weak self] in self?.hotkeyPressed() }
         hotKeyManager.register(keyCode: store.config.hotkeyKeyCode, modifiers: store.config.hotkeyModifiers)
         statusItem?.refresh()
+        settingsModel.sync() // the hotkey row flips from "waiting" to working
         store.observe { [weak self] old, new in
             guard new.hotkeyKeyCode != old.hotkeyKeyCode || new.hotkeyModifiers != old.hotkeyModifiers else { return }
             self?.hotKeyManager.register(keyCode: new.hotkeyKeyCode, modifiers: new.hotkeyModifiers)

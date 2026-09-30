@@ -77,7 +77,7 @@ struct SettingRow<Control: View>: View {
         } label: {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                if let note { Text(note).font(.caption).foregroundStyle(.secondary) }
+                if let note { Text(note).font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true) }
                 if model.showKeys {
                     Text(key).font(.custom(PikaFont.family, size: 11)).foregroundStyle(.tint)
                 }
@@ -216,7 +216,14 @@ private struct PermissionsPane: View {
                 // hotkey live in General; onboarding shows all four.
                 PermissionChecklist(model: model, items: [.accessibility, .chrome]) { model.pane = .general }
                     .padding(.horizontal, 16)
-                    .background(RoundedRectangle(cornerRadius: 8).fill(Color(nsColor: .controlBackgroundColor)))
+                    .background(RoundedRectangle(cornerRadius: 8).fill(Color(nsColor: .quaternarySystemFill)))
+                HStack {
+                    Text("Walk through setup again, including the hotkey and start at login.")
+                        .font(.callout).foregroundStyle(.secondary)
+                    Spacer()
+                    Button("Run Setup Again…") { model.runSetupAgain?() }
+                }
+                .padding(.top, 4)
             }
             .padding(20)
         }
@@ -322,7 +329,7 @@ private struct SearchPane: View {
         VStack(spacing: 0) {
             Form {
                 Section {
-                    SettingRow(model: model, title: "Recency weight", note: "How much recently used windows rise", key: "ranking.recency_weight") {
+                    SettingRow(model: model, title: "Recency weight", note: "Lifts windows you used in the last few minutes. 0 ignores recency; higher lets a recent window beat a closer name match.", key: "ranking.recency_weight") {
                         CommitSlider(model: model, key: "ranking.recency_weight", value: model.config.recencyWeight, range: 0...200, step: 5, format: { "\(Int($0))" }) {
                             model.set("ranking", "recency_weight", .double($0))
                         }
@@ -330,7 +337,7 @@ private struct SearchPane: View {
                     SettingRow(model: model, title: "Learn from my picks", note: "Remember which window you choose for each query", key: "ranking.learning") {
                         Toggle("", isOn: Binding(get: { model.config.learning }, set: { model.set("ranking", "learning", .bool($0)) })).labelsHidden()
                     }
-                    SettingRow(model: model, title: "Learning weight", key: "ranking.learn_weight") {
+                    SettingRow(model: model, title: "Learning weight", note: "Lifts the window you usually pick for what you typed. 0 ignores past picks; higher lets a habit beat a closer name match.", key: "ranking.learn_weight") {
                         CommitSlider(model: model, key: "ranking.learn_weight", value: model.config.learnWeight, range: 0...200, step: 5, format: { "\(Int($0))" }) {
                             model.set("ranking", "learn_weight", .double($0))
                         }

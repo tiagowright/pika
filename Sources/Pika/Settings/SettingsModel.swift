@@ -56,6 +56,13 @@ final class SettingsModel {
     private(set) var hotkeyHealth: HotkeyHealth
     private(set) var theme: Theme
 
+    /// Optional checklist items the user chose to skip during onboarding
+    /// (SETTINGS.md §2.4.4), mirrored from state.json.
+    private(set) var skipped: Set<String>
+
+    /// Settings → Permissions → Run Setup Again (SETTINGS.md §2.4.1).
+    @ObservationIgnored var runSetupAgain: (() -> Void)?
+
     /// ⌥ held: show each control's config.toml key.
     var showKeys = false
     /// Set when a write to config.toml fails; shown as an alert.
@@ -89,6 +96,7 @@ final class SettingsModel {
         loginItem = permissions.loginItem
         hotkeyHealth = hotKey.health(for: store.config)
         theme = Appearance.shared.theme
+        skipped = Set(StateStore.shared.state.skipped)
 
         store.observe { [weak self] _, _ in self?.sync() }
         store.observeIssues { [weak self] _ in self?.sync() }
@@ -106,6 +114,7 @@ final class SettingsModel {
         chrome = permissions.chrome
         loginItem = permissions.loginItem
         hotkeyHealth = hotKey.health(for: config)
+        skipped = Set(StateStore.shared.state.skipped)
         if accessibility {
             troubleshootingTimer?.cancel()
             showAccessibilityTroubleshooting = false
@@ -212,6 +221,28 @@ final class SettingsModel {
         hotkeyHint = nil
         set("", "hotkey", .string(text))
         stopRecordingHotkey()
+    }
+
+    // MARK: - Onboarding
+
+    /// Skipping Chrome also turns Chrome tabs off, so Pika never springs
+    /// the Automation prompt on someone who said no here (SHIPPING O4).
+    func skip(_ item: PermissionChecklist.Item) {
+        StateStore.shared.update { state in
+            if !state.skipped.contains(item.id) { state.skipped.append(item.id) }
+        }
+        if item == .chrome, config.chromeTabs {
+            set("sources", "chrome_tabs", .bool(false))
+        }
+        sync()
+    }
+
+    func isSkipped(_ item: PermissionChecklist.Item) -> Bool { skipped.contains(item.id) }
+
+    /// Everything onboarding requires: Accessibility, and a hotkey that
+    /// will actually fire.
+    var requiredItemsDone: Bool {
+        accessibility && !hotkeyHealth.isProblem && hotkeyHealth != .notRegisteredYet
     }
 
     // MARK: - Data

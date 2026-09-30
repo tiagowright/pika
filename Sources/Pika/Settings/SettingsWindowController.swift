@@ -7,9 +7,10 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     let model: SettingsModel
     private var flagsMonitor: Any?
 
-    init(hotKey: HotKeyManager) {
+    /// Onboarding shares the same model, so both always agree.
+    init(model: SettingsModel) {
         PikaFont.registerBundled() // Settings can open before the panel is ever built
-        model = SettingsModel(hotKey: hotKey)
+        self.model = model
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 760, height: 540),
             styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
@@ -31,7 +32,7 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
         PermissionCenter.shared.refresh()
         model.sync()
         guard let window else { return }
-        NSApp.activate()
+        AppPresence.windowOpened(window)
         showWindow(nil)
         // Pika has no Dock icon and is rarely the active app, and macOS may
         // decline activation; ordering front regardless keeps the window
@@ -51,6 +52,11 @@ final class SettingsWindowController: NSWindowController, NSWindowDelegate {
             self?.model.showKeys = event.modifierFlags.contains(.option)
             return event
         }
+    }
+
+    func windowWillClose(_ notification: Notification) {
+        model.stopRecordingHotkey()
+        if let window { AppPresence.windowClosed(window) }
     }
 
     func windowDidResignKey(_ notification: Notification) {

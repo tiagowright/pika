@@ -374,7 +374,19 @@ Requirements:
    whether Pika may run it itself (Q12) is still untested, because testing
    it would revoke your real grant
 6. **Onboarding**: Welcome → checklist → try-it, reusing the checklist
-   component
+   component. ✅ *Done 2026-09-29*: `Settings/Onboarding.swift`. Shares
+   `SettingsModel` with Settings. Shows all four checklist rows, with Skip
+   on the optional ones (skipping Chrome also writes `chrome_tabs =
+   false`). Continue needs Accessibility and a working hotkey. Pressing the
+   hotkey on the last page finishes setup and opens the switcher. No
+   system prompt fires at launch any more. Closing early counts as done
+   once Accessibility is granted; otherwise setup returns next launch.
+   Settings → Permissions has Run Setup Again. While Setup or Settings is
+   open, Pika is a regular app (Dock icon, ⌘Tab, menus) so users can go to
+   System Settings and back; it returns to accessory when they close
+   (`AppPresence.swift`). Not done: highlighting
+   only new rows for upgraders (§2.4.1), which needs a second onboarding
+   version first
 
 ---
 

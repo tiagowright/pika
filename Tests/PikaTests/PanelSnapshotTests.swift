@@ -132,3 +132,33 @@ import Testing
         }
     }
 }
+
+@MainActor @Suite struct OnboardingSnapshotTests {
+    @Test(.enabled(if: PanelSnapshotTests.outDir != nil)) func render() throws {
+        PikaFont.registerBundled()
+        _ = NSApplication.shared
+        let model = SettingsModel(hotKey: HotKeyManager())
+        for (name, appearance) in [("light", NSAppearance(named: .aqua)!), ("dark", NSAppearance(named: .darkAqua)!)] {
+            for page in OnboardingFlow.Page.allCases where name == "light" || page == .checklist {
+                let flow = OnboardingFlow()
+                flow.page = page
+                let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 640, height: 600),
+                                      styleMask: [.titled, .closable, .fullSizeContentView], backing: .buffered, defer: false)
+                window.appearance = appearance
+                window.isReleasedWhenClosed = false
+                window.titlebarAppearsTransparent = true
+                window.contentViewController = NSHostingController(rootView: OnboardingView(model: model, flow: flow, onFinish: {}))
+                window.center()
+                window.orderFrontRegardless()
+                RunLoop.main.run(until: Date().addingTimeInterval(0.6))
+                let out = URL(fileURLWithPath: PanelSnapshotTests.outDir!).appendingPathComponent("onboarding-\(page)-\(name).png")
+                let capture = Process()
+                capture.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+                capture.arguments = ["-x", "-o", "-l", String(window.windowNumber), out.path]
+                try capture.run()
+                capture.waitUntilExit()
+                window.close()
+            }
+        }
+    }
+}

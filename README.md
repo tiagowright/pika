@@ -73,14 +73,16 @@ Settings (`⌘,` from the menu or from the switcher) has every option in
 `config.toml`, a hotkey recorder, and a Permissions page showing what's
 granted and how to fix what isn't. If the notch hides the menu bar icon,
 open Pika.app again from Spotlight or Finder: while Pika is running, that
-opens Settings.
+opens Settings. While Settings or first-run setup is open, Pika shows in
+the Dock and in ⌘Tab like any app, so you can go to System Settings and
+come back; it disappears from both again when you close the window.
 
 ## Permissions
 
 | Permission | Required? | What happens |
 |---|---|---|
-| **Accessibility** | Yes | Reads window titles and raises windows. Pika prompts on first launch, then polls once a second and starts itself the moment you grant it — no relaunch needed. |
-| **Automation → Google Chrome** | Optional | Lets Pika list individual Chrome *tabs*. Denied, you get one row per Chrome *window* instead, permanently and without complaint. |
+| **Accessibility** | Yes | Reads window titles and raises windows. First-run setup explains it before macOS asks, and Pika starts itself the moment you grant it — no relaunch needed. |
+| **Automation → Google Chrome** | Optional | Lets Pika list individual Chrome *tabs*. Skip it in setup, or deny it, and you get one row per Chrome *window* instead. |
 | **Screen Recording** | Never asked | Titles come from the Accessibility API precisely so this second scary prompt isn't needed. |
 
 ## Privacy and local data
@@ -193,8 +195,6 @@ Items**, and check **Privacy & Security → Accessibility**.
 Named here rather than discovered by you. `requirements/SHIPPING.md` has the
 full list with reasoning.
 
-- **No first-run setup yet.** On a fresh install, macOS asks for
-  Accessibility once; after that, Settings → Permissions is the guide.
 - **Window titles for other Spaces can be stale.** Accessibility titles are
   Space-scoped, so a window you haven't visited since renaming shows its old
   title until you do.
