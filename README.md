@@ -1,28 +1,30 @@
 # Pika
 
 Pika is a blazing-fast, keyboard-first window finder for macOS. To switch
-to any window, press ctrl+space, type a few letters, then Enter.
+to any window, press `ctrl+space`, type a few letters, then `Enter`.
 
 TK: screenshots
 
 Pika brings the fast, fuzzy file-switching pattern from editors
-such as Zed and VS Code to the windows you already have open. Press a hotkey,
-type a couple of letters from an app or window title, then press `Enter` to
-jump to that exact window. Pika lists open windows across Spaces and, when
-enabled, individual Chrome tabs. It is blazing fast, even with a hundred
+such as Zed and VS Code to the windows you already have open. 
+Pika lists open windows across Spaces and, when
+enabled, individual Chrome tabs. 
+
+It is blazing fast, even with a hundred
 open windows and tabs, responding in under 30ms to most keypress, far faster
-than humans can perceive. The app is local by design, and your data
+than humans can perceive. 
+
+The app is local by design, and your data
 never leaves your machine.
 
 It is keyboard driven:
 `Ctrl+Space` brings up the switcher, which allows you to search for
-the window using a few letters and fuzzy matching, then `Enter` to switch. 
+the window using a few letters and fuzzy matching, then `Enter` to switch.
 For example, after `Ctrl+Space`:
 - `zp` finds the window `Zed · pika — README.md`, because both
 characters landed on word beginnings.
 - `fp` finds the window `Finder · pika`
-- `ghpi` finds the tab `Ghostty · pika/`
-- `gcpi` finds the tab `Google Chrome · pika/README.md at main`
+- `c p` finds the tab `Google Chrome · pika/README.md at main`
 - `Enter` brings you back to the last window you were.
 
 ## Blazing fast
