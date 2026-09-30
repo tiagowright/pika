@@ -52,7 +52,10 @@ final class HotKeyManager {
             var hkID = EventHotKeyID()
             GetEventParameter(eventRef, EventParamName(kEventParamDirectObject), EventParamType(typeEventHotKeyID), nil, MemoryLayout<EventHotKeyID>.size, nil, &hkID)
             let manager = Unmanaged<HotKeyManager>.fromOpaque(userData).takeUnretainedValue()
-            if hkID.id == manager.id { manager.onPressed?() }
+            if hkID.id == manager.id {
+                LatencyProbe.begin(.hotkey, eventTime: GetEventTime(eventRef))
+                manager.onPressed?()
+            }
             return noErr
         }, 1, &eventType, Unmanaged.passUnretained(self).toOpaque(), &eventHandler)
     }
