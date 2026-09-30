@@ -92,6 +92,26 @@ always rely on your text editor as well.
 | **Automation → Google Chrome** | Optional | Lets Pika list individual Chrome *tabs*. Skip it in setup, or deny it, and you get one row per Chrome *window* instead. |
 | **Screen Recording** | Never asked | Titles come from the Accessibility API precisely so this second scary prompt isn't needed. |
 
+## Install
+
+TK: screenshot of the setup wizard
+
+No downloadable installers available yet. The app is currently for those
+ready to install from github. Tested on macOS 26, Apple Silicon, with 
+Swift 6.4 (command line tools is enough).
+
+```sh
+git clone https://github.com/tiagowright/pika.git
+cd pika
+./install.sh
+```
+
+On first launch, a short setup walks through what Pika needs:
+Accessibility (required), Chrome tabs and starting at login (both
+optional, each with a Skip), and a check that your hotkey works. It ends
+by having you press the hotkey once. Run it again any time from
+Settings → Permissions → *Run Setup Again*.
+
 ## Privacy and local data
 
 Pika makes **no network connections** and has no telemetry, analytics, or crash
@@ -123,31 +143,6 @@ unified log. Do not attach Pika logs to a bug report without reviewing them.
 **Settings → Privacy & Data** lists each file with a *Show in Finder*
 button, and can clear recency, forget learned queries, or delete the icon
 cache. To remove all local data, use the uninstall instructions below.
-
-## Install
-
-TK: screenshot of the setup wizard
-
-No downloadable installers available yet. The app is currently for those
-ready to install from github. Tested on macOS 26, Apple Silicon, with 
-Swift 6.4 (command line tools is enough).
-
-```sh
-git clone https://github.com/tiagowright/pika.git
-cd pika
-./install.sh
-```
-
-`install.sh` builds, tells you what it's about to do, and asks before it
-quits a running Pika and replaces `/Applications/Pika.app`. 
-Installing to `/Applications` gives Pika a stable app location for Accessibility
-permissions.
-
-On first launch, a short setup walks through what Pika needs:
-Accessibility (required), Chrome tabs and starting at login (both
-optional, each with a Skip), and a check that your hotkey works. It ends
-by having you press the hotkey once. Run it again any time from
-Settings → Permissions → *Run Setup Again*.
 
 ## Uninstall
 
@@ -184,7 +179,6 @@ Screenshot tests of the switcher, the menu bar icon, Settings, and setup
 are opt-in: set `PIKA_SNAPSHOT_DIR` to a folder, and they write PNGs there.
 The Settings and setup ones briefly put windows on screen.
 
-
 ## Known rough edges
 
 Named here rather than discovered by you. `requirements/SHIPPING.md` has the
@@ -209,4 +203,4 @@ Bundled third-party work, with full notices in
   [`Sources/Pika/Resources/JetBrainsMono-OFL.txt`](Sources/Pika/Resources/JetBrainsMono-OFL.txt)
   and is copied into the `.app` bundle, as the OFL requires.
   
-**Catppuccin** (MIT) for the Mocha and Latte palettes in `Theme.swift`.
+**Catppuccin** (MIT) for the Mocha and Latte palettes.
