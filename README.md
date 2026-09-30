@@ -205,16 +205,8 @@ ignored and can be deleted.
 
 ## Uninstall
 
-Quit Pika from its menu bar icon (or with the first command below), then:
-
 ```sh
-pkill -f '/Applications/Pika.app/Contents/MacOS/Pika'
-rm -rf /Applications/Pika.app
-rm -rf ~/Library/Application\ Support/io.github.tiagowright.pika
-rm -rf ~/Library/Caches/io.github.tiagowright.pika
-rm -rf ~/.config/pika
-tccutil reset Accessibility io.github.tiagowright.pika
-tccutil reset AppleEvents io.github.tiagowright.pika
+./uninstall.sh              # add --keep-data to keep your config and history
 ```
 
 Then remove the leftover entry under **System Settings → General → Login
