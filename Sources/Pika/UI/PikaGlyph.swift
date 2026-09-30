@@ -1,65 +1,54 @@
 import AppKit
 
-/// The pika head from `AppIcon.svg` as a flat silhouette with the eyes
-/// cut out: the menu bar icon, and the same mark in the switcher's query
-/// row so the two read as one app. Drawn from the SVG's own path data
-/// rather than a bitmap, so it stays crisp at any scale.
+/// Pika's artwork, bundled as SVG in `Resources/Icons` — see `icons/`
+/// for how the variants are made and a page to inspect them all. NSImage
+/// renders SVG natively, so every size stays crisp from the one file.
+enum PikaArt {
+    static func svg(_ name: String) -> NSImage? {
+        guard let url = Bundle.module.url(forResource: name, withExtension: "svg", subdirectory: "Icons") else { return nil }
+        return NSImage(contentsOf: url)
+    }
+
+    /// Pika.app's AppIcon.icns is the Mocha icon, so the light theme swaps
+    /// in Latte while Pika runs (Dock, ⌘Tab, Settings, onboarding) and
+    /// the dark theme goes back to the bundle's own icon.
+    static func applyAppIcon(for theme: Theme) {
+        NSApp.applicationIconImage = theme.isDark ? nil : latteAppIcon
+    }
+    private static let latteAppIcon = svg("pika-origami-latte")
+}
+
+/// The simplified leaping pika: the menu bar icon, and the same mark in
+/// the switcher's query row so the two read as one app. Flat facets from
+/// the app icon, in Mocha colours on dark backgrounds and Latte on light.
 enum PikaGlyph {
-    /// Ears and face, copied from AppIcon.svg (512×512, y down). The tuft
-    /// is left out: it crosses itself, and it's invisible at 18pt anyway.
-    private static let silhouette = [
-        "M134 231C106 215 91 181 97 151C102 124 119 110 142 113C176 116 198 154 190 195Z",
-        "M322 195C314 154 336 116 370 113C393 110 410 124 415 151C421 181 406 215 378 231Z",
-        "M256 172C180 172 132 209 114 265C104 288 96 313 101 339C110 389 174 418 256 418C338 418 402 389 411 339C416 313 408 288 398 265C380 209 332 172 256 172Z",
-    ]
-    /// The SVG's eyes (rx 16, ry 21), enlarged so they survive at 16pt.
-    private static let eyes = [NSPoint(x: 189, y: 278), NSPoint(x: 323, y: 278)]
-    private static let eyeRadii = NSSize(width: 26, height: 34)
-    private static let artBounds = NSRect(x: 91, y: 110, width: 330, height: 308)
+    private static let mocha = PikaArt.svg("pika-glyph-mocha")
+    private static let latte = PikaArt.svg("pika-glyph-latte")
 
-    /// Paths are parsed once; drawing only transforms copies.
-    private static let shapes: [NSBezierPath] = silhouette.map(path(fromSVG:))
-    private static let eyeShapes: [NSBezierPath] = eyes.map { eye in
-        NSBezierPath(ovalIn: NSRect(x: eye.x - eyeRadii.width, y: eye.y - eyeRadii.height,
-                                    width: eyeRadii.width * 2, height: eyeRadii.height * 2))
+    /// Width over height of the glyph's viewBox (296 × 198).
+    static let aspect: CGFloat = 296.0 / 198.0
+
+    /// The glyph for one background, at its SVG size; callers size it.
+    static func image(dark: Bool) -> NSImage? { dark ? mocha : latte }
+
+    /// Draws the glyph as large as fits, centred in `rect`. Works in
+    /// flipped and unflipped contexts.
+    static func draw(in rect: NSRect, dark: Bool) {
+        guard let art = image(dark: dark) else { return }
+        let width = min(rect.width, rect.height * aspect)
+        let height = width / aspect
+        let target = NSRect(x: rect.midX - width / 2, y: rect.midY - height / 2, width: width, height: height)
+        art.draw(in: target, from: .zero, operation: .sourceOver, fraction: 1, respectFlipped: true, hints: nil)
     }
 
-    /// Draws the head centred in `rect`, `side` points across, in a
-    /// flipped (y-down) context. `eyes` fills the eyes with a colour;
-    /// nil clears them to transparent, which only makes sense in an image.
-    static func draw(in rect: NSRect, side: CGFloat, color: NSColor, eyes eyeColor: NSColor?) {
-        let scale = side / max(artBounds.width, artBounds.height)
-        var transform = AffineTransform(
-            translationByX: rect.minX + (rect.width - artBounds.width * scale) / 2 - artBounds.minX * scale,
-            byY: rect.minY + (rect.height - artBounds.height * scale) / 2 - artBounds.minY * scale
-        )
-        transform.scale(scale)
-
-        // Fill each shape on its own: as one path, the shapes' opposite
-        // windings would cancel where they overlap.
-        color.setFill()
-        for shape in shapes {
-            let copy = shape.copy() as! NSBezierPath
-            copy.transform(using: transform)
-            copy.fill()
-        }
-
-        let context = NSGraphicsContext.current
-        if let eyeColor { eyeColor.setFill() } else { context?.compositingOperation = .clear }
-        for eye in eyeShapes {
-            let copy = eye.copy() as! NSBezierPath
-            copy.transform(using: transform)
-            copy.fill()
-        }
-        context?.compositingOperation = .sourceOver
-    }
-
-    /// The status item image. `badged` adds an orange dot: something needs
-    /// the user's attention. A badged image can't be a template (the dot
-    /// must stay orange), so it draws the head in the label colour itself.
+    /// The status item image. It follows the menu bar's own appearance,
+    /// which tracks the wallpaper rather than the Pika theme: AppKit
+    /// reruns the handler whenever that appearance changes. `badged` adds
+    /// an orange dot: something needs the user's attention.
     static func menuBarImage(badged: Bool) -> NSImage {
-        let image = NSImage(size: NSSize(width: 18, height: 18), flipped: true) { rect in
-            draw(in: rect, side: 16, color: badged ? .labelColor : .black, eyes: nil)
+        let image = NSImage(size: NSSize(width: 24, height: 16), flipped: true) { rect in
+            let dark = NSAppearance.currentDrawing().bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            draw(in: rect, dark: dark)
             if badged {
                 let context = NSGraphicsContext.current
                 let dot = NSRect(x: rect.maxX - 6, y: rect.maxY - 6, width: 6, height: 6)
@@ -71,54 +60,7 @@ enum PikaGlyph {
             }
             return true
         }
-        image.isTemplate = !badged
         image.accessibilityDescription = badged ? "Pika — needs attention" : "Pika"
         return image
-    }
-
-    /// Absolute M, L, C, and Z commands only — all AppIcon.svg uses.
-    private static func path(fromSVG d: String) -> NSBezierPath {
-        let path = NSBezierPath()
-        var numbers: [CGFloat] = []
-        var command: Character = "M"
-
-        func flush() {
-            switch command {
-            case "M" where numbers.count >= 2:
-                path.move(to: NSPoint(x: numbers[0], y: numbers[1]))
-            case "L" where numbers.count >= 2:
-                path.line(to: NSPoint(x: numbers[0], y: numbers[1]))
-            case "C":
-                var i = 0
-                while i + 5 < numbers.count {
-                    path.curve(to: NSPoint(x: numbers[i + 4], y: numbers[i + 5]),
-                               controlPoint1: NSPoint(x: numbers[i], y: numbers[i + 1]),
-                               controlPoint2: NSPoint(x: numbers[i + 2], y: numbers[i + 3]))
-                    i += 6
-                }
-            case "Z":
-                path.close()
-            default:
-                break
-            }
-            numbers = []
-        }
-
-        var token = ""
-        for c in d + " " {
-            if c.isLetter {
-                if let n = Double(token) { numbers.append(CGFloat(n)) }
-                token = ""
-                flush()
-                command = c
-            } else if c == " " || c == "," {
-                if let n = Double(token) { numbers.append(CGFloat(n)) }
-                token = ""
-            } else {
-                token.append(c)
-            }
-        }
-        flush()
-        return path
     }
 }

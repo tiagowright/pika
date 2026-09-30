@@ -52,7 +52,7 @@ the matches immediately.
 | `Ctrl+W` | Delete the previous word |
 | `Ctrl+U` | Clear the query |
 | `Backspace` | Delete a character |
-| `⌘,` | Open Settings (so does clicking the pika head in the switcher) |
+| `⌘,` | Open Settings (so does clicking the pika in the switcher) |
 
 Spaces mean AND: `z pika` requires both tokens to match, in any order.
 
@@ -65,7 +65,7 @@ clear it. Or record a different hotkey in Settings → General.
 
 ## Menu bar and Settings
 
-Pika's menu bar icon (a pika head) is how you quit, switch the theme, and
+Pika's menu bar icon (a leaping pika) is how you quit, switch the theme, and
 open Settings. An orange dot on it means something needs you — a
 missing permission, a hotkey that won't fire, or a config line Pika
 couldn't use — and the menu says what and links to the fix.

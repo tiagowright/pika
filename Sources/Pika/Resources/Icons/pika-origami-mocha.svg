@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="1024" height="1024" viewBox="0 0 342 342"
+     fill="none" role="img" aria-labelledby="title description">
+  <title id="title">Pika — leaping origami, Catppuccin Mocha</title>
+  <desc id="description">A folded-paper pika leaps to the right across a dark,
+    rounded-square macOS icon. Rounded swept-back ears, a warm peach face, a
+    dark round eye, and lavender and pink facets follow the supplied reference.
+    All fills and gradient stops use the official Catppuccin Mocha palette.
+    Entirely editable vector artwork; no embedded bitmap, font, or dependency.
+  </desc>
+  <!-- Official Mocha colors, including the gradient endpoints:
+       Rosewater #f5e0dc · Flamingo #f2cdcd · Pink #f5c2e7
+       Mauve #cba6f7 · Maroon #eba0ac · Peach #fab387 · Yellow #f9e2af
+       Blue #89b4fa · Lavender #b4befe · Surface0 #313244
+       Base #1e1e2e · Mantle #181825 · Crust #11111b
+       Palette: https://github.com/catppuccin/catppuccin#-palette
+       Gradients and translucent shading blend only these palette colors. -->
+  <defs>
+    <path id="tile-shape" d="M77 .8H265.0
+      C291.8 .8 308.9 6.3 322.5 19.7
+      C335.9 33.1 341.2 50.4 341.2 77V265
+      C341.2 291.7 335.8 308.8 322.3 322.3
+      C308.8 335.8 291.7 341.2 265 341.2H77
+      C50.3 341.2 33.2 335.8 19.7 322.3
+      C6.2 308.8 .8 291.7 .8 265V77
+      C.8 50.3 6.2 33.2 19.7 19.7
+      C33.2 6.2 50.3 .8 77 .8Z"/>
+    <clipPath id="tile-clip"><use xlink:href="#tile-shape"/></clipPath>
+    <linearGradient id="tile" x1="33" y1="0" x2="265" y2="342" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#313244"/>
+      <stop offset=".47" stop-color="#1e1e2e"/>
+      <stop offset="1" stop-color="#181825"/>
+    </linearGradient>
+    <radialGradient id="tile-light" cx="20" cy="9" r="310" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#89b4fa" stop-opacity=".13"/>
+      <stop offset=".7" stop-color="#89b4fa" stop-opacity=".025"/>
+      <stop offset="1" stop-color="#89b4fa" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="rim" x1="33" y1="8" x2="236" y2="321" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#b4befe" stop-opacity=".44"/>
+      <stop offset=".43" stop-color="#b4befe" stop-opacity=".10"/>
+      <stop offset="1" stop-color="#313244" stop-opacity=".10"/>
+    </linearGradient>
+    <radialGradient id="ground" cx="181" cy="272" r="98" gradientTransform="translate(0 244.8) scale(1 .1)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#b4befe" stop-opacity=".19"/>
+      <stop offset=".7" stop-color="#b4befe" stop-opacity=".11"/>
+      <stop offset="1" stop-color="#b4befe" stop-opacity=".015"/>
+    </radialGradient>
+    <linearGradient id="far-foot" x1="38" y1="255" x2="79" y2="214" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f5c2e7"/>
+      <stop offset=".5" stop-color="#cba6f7"/>
+      <stop offset="1" stop-color="#eba0ac"/>
+    </linearGradient>
+    <linearGradient id="back-flap" x1="62" y1="149" x2="124" y2="180" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f5c2e7"/>
+      <stop offset=".58" stop-color="#f2cdcd"/>
+      <stop offset="1" stop-color="#cba6f7"/>
+    </linearGradient>
+    <linearGradient id="back-flap-fold" x1="105" y1="166" x2="94" y2="186" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f5c2e7"/>
+      <stop offset="1" stop-color="#cba6f7"/>
+    </linearGradient>
+    <linearGradient id="far-ear" x1="215" y1="81" x2="254" y2="118" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f5c2e7"/>
+      <stop offset=".53" stop-color="#eba0ac"/>
+      <stop offset="1" stop-color="#fab387"/>
+    </linearGradient>
+    <path id="body-shape" d="M43 255.8
+      L76.6 213.0 96.8 182.2 126.5 168.0 181.1 146.1 246.7 132.5
+      L217.3 106.0 273.7 118.7
+      C289.7 124.0 302.9 137.4 313.4 147.3
+      C316.6 150.2 317.0 151.3 315.0 155.2
+      L308.5 165.4
+      C303.1 173.4 294.2 179.6 282.3 185.7
+      L308.4 210.2
+      C314.6 216.3 311.4 221.5 304.0 219.8
+      L250.3 205.9 193.9 205.6 143.5 216.9 106.6 237.4 48.3 266.1
+      C41.2 269.6 38.4 265.8 42.3 258.0Z"/>
+    <clipPath id="body-clip"><use xlink:href="#body-shape"/></clipPath>
+    <linearGradient id="body" x1="84" y1="249" x2="213" y2="149" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#b4befe"/>
+      <stop offset=".65" stop-color="#cba6f7"/>
+      <stop offset="1" stop-color="#f5c2e7"/>
+    </linearGradient>
+    <linearGradient id="haunch" x1="89" y1="193" x2="164" y2="231" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#b4befe"/>
+      <stop offset="1" stop-color="#cba6f7"/>
+    </linearGradient>
+    <linearGradient id="body-fold" x1="162" y1="178" x2="158" y2="218" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#cba6f7"/>
+      <stop offset="1" stop-color="#b4befe"/>
+    </linearGradient>
+    <linearGradient id="fold-shade" x1="173" y1="181" x2="149" y2="219" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1e1e2e" stop-opacity="0"/>
+      <stop offset="1" stop-color="#1e1e2e" stop-opacity=".15"/>
+    </linearGradient>
+    <linearGradient id="back-plane" x1="136" y1="169" x2="240" y2="153" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#cba6f7"/>
+      <stop offset=".51" stop-color="#f5c2e7"/>
+      <stop offset="1" stop-color="#fab387"/>
+    </linearGradient>
+    <linearGradient id="forehead" x1="221" y1="110" x2="265" y2="133" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f9e2af"/>
+      <stop offset="1" stop-color="#fab387"/>
+    </linearGradient>
+    <linearGradient id="face" x1="230" y1="163" x2="306" y2="146" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fab387" stop-opacity=".68"/>
+      <stop offset=".55" stop-color="#f9e2af" stop-opacity=".52"/>
+      <stop offset="1" stop-color="#f5e0dc"/>
+    </linearGradient>
+    <linearGradient id="chest" x1="226" y1="179" x2="263" y2="210" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f5c2e7"/>
+      <stop offset="1" stop-color="#eba0ac"/>
+    </linearGradient>
+    <linearGradient id="foreleg" x1="263" y1="189" x2="291" y2="219" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fab387"/>
+      <stop offset="1" stop-color="#f2cdcd"/>
+    </linearGradient>
+    <linearGradient id="near-ear" x1="159" y1="98" x2="231" y2="143" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#cba6f7"/>
+      <stop offset=".38" stop-color="#cba6f7"/>
+      <stop offset="1" stop-color="#b4befe"/>
+    </linearGradient>
+    <linearGradient id="ear-edge" x1="153" y1="99" x2="221" y2="111" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f5c2e7" stop-opacity=".48"/>
+      <stop offset="1" stop-color="#f5c2e7" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Continuous rounded square; the canvas outside the tile is transparent. -->
+  <g id="background">
+    <use xlink:href="#tile-shape" fill="url(#tile)"/>
+    <use xlink:href="#tile-shape" fill="url(#tile-light)"/>
+    <use xlink:href="#tile-shape" stroke="url(#rim)" stroke-width="1.35"/>
+  </g>
+
+  <!-- Original proportions are retained; 5.5 units of vertical translation
+       centers the 342 x 331 reference composition on a square canvas. -->
+  <g id="pika-composition" transform="translate(0 5.5)">
+    <path id="floating-shadow" d="M83.5 273
+      C121 263.0 235.1 261.3 279.3 273
+      C244.4 280.2 119.5 279.3 83.5 273Z" fill="url(#ground)"/>
+
+    <g id="pika">
+      <path id="far-hind-foot" d="M78.5 211.1 53.4 222.2 29.2 257.6
+        C25.3 263.7 27.6 267.2 34.0 264.8
+        L63.8 249.2 84.1 228.2Z" fill="url(#far-foot)"/>
+
+      <path id="rear-paper-flap" d="M58.7 151.6 175.8 148.9 97.0 182.2
+        C82.6 176.6 68.8 168.8 56.4 159.1
+        C51.6 155.3 52.5 151.9 58.7 151.6Z" fill="url(#back-flap)"/>
+      <path id="rear-flap-fold" d="M73.3 165.7 126.5 168.0 97.0 182.2Z"
+        fill="url(#back-flap-fold)"/>
+
+      <path id="far-rounded-ear" d="M203.7 105.0
+        C195.7 95.7 200.8 83.1 212.2 80.0
+        C225.8 75.7 241.9 84.6 254.0 96.4
+        L274.0 119.0 217.3 107.0Z" fill="url(#far-ear)"/>
+
+      <use id="body-silhouette" xlink:href="#body-shape" fill="url(#body)"/>
+      <g id="paper-facets" clip-path="url(#body-clip)">
+        <path id="hind-leg-fold" d="M76.6 213.0 96.8 182.2 110.0 218.8
+          80.4 249.9 42.2 269.3 38.4 262.1Z" fill="#b4befe"/>
+        <path id="haunch-plane" d="M96.8 182.2 126.5 168.0 214.2 182.4
+          143.5 216.9 106.6 237.4 77.0 251.8Z" fill="url(#haunch)"/>
+        <path id="belly-fold" d="M126.5 168.0 214.2 182.4 193.9 205.6
+          143.5 216.9 106.6 237.4Z" fill="url(#body-fold)"/>
+        <path id="belly-fold-shading" d="M126.5 168.0 214.2 182.4 193.9 205.6
+          143.5 216.9 106.6 237.4Z" fill="url(#fold-shade)"/>
+        <path id="upper-back-plane" d="M126.4 168.1 181.0 146.0 246.9 132.3
+          214.3 182.5Z" fill="url(#back-plane)"/>
+        <path id="forehead-plane" d="M217.1 105.7 274.1 118.5 286.6 136.0
+          246.5 132.8Z" fill="url(#forehead)"/>
+        <path id="head-base" d="M246.7 132.4 273.7 118.6
+          C294.7 125.4 308.8 140.0 321.2 151.3
+          L309.0 168.5 282.4 186.0 214.1 182.6Z" fill="#f5e0dc"/>
+        <path id="head-plane" d="M246.7 132.4 273.7 118.6
+          C294.7 125.4 308.8 140.0 321.2 151.3
+          L309.0 168.5 282.4 186.0 214.1 182.6Z" fill="url(#face)"/>
+        <path id="chest-plane" d="M214.2 182.4 282.4 185.8 250.4 206.1
+          193.7 205.8Z" fill="url(#chest)"/>
+        <path id="chest-light-plane" d="M214.2 182.4 282.4 185.8 250.4 206.1Z"
+          fill="#f2cdcd" fill-opacity=".38"/>
+        <path id="outstretched-forefoot" d="M282.3 185.6 314.9 214.3 314.0 224.1
+          303.5 220.8 250.1 205.8Z" fill="url(#foreleg)"/>
+      </g>
+
+      <path id="near-rounded-ear" d="M181.2 146.1
+        C165.4 145.0 150.8 136.7 146.1 121.0
+        C142.3 109.1 148.1 102.0 159.0 98.0
+        C175.3 92.0 194.8 95.3 211.6 103.0
+        C225.6 110.0 237.7 121.1 246.7 132.5
+        L188.1 145.1
+        C185.4 145.8 183.2 146.2 181.2 146.1Z" fill="url(#near-ear)"/>
+      <path id="ear-fold-highlight" d="M146.7 116.4
+        C143.7 107.8 149.9 101.7 159.6 98.4
+        C175.3 92.7 194.5 95.7 211.0 103.4"
+        stroke="url(#ear-edge)" stroke-width=".7" stroke-linecap="round"/>
+
+      <circle id="eye" cx="283.6" cy="149.6" r="8.35" fill="#11111b"/>
+      <path id="nose" d="M312.7 148.0 315.3 150.0
+        Q317.0 151.5 314.9 154.8
+        L313.2 157.3 309.9 152.7
+        Q309.7 150.0 312.7 148.0Z" fill="#eba0ac"/>
+    </g>
+  </g>
+</svg>

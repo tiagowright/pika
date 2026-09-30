@@ -58,6 +58,9 @@ base, as the Catppuccin style guide describes for selections.
 
 ## Pika's icon
 
-`AppIcon.svg` (and the `AppIcon.icns` generated from it by `make_icon.sh`) is
-an original design by Tiago Wright, drawn by hand in the Catppuccin Mocha
-palette. It carries the same MIT licence as the rest of the project.
+The leaping origami pika in `Sources/Pika/Resources/Icons` (and the
+`AppIcon.icns` generated from it by `make_icon.sh`) is an original design
+for Pika in the Catppuccin Mocha palette; its Latte variants are derived
+from it by `icons/make_variants.py`. The previous icon, kept in
+`icons/legacy/`, is an original design by Tiago Wright. All of it carries
+the same MIT licence as the rest of the project.

@@ -5,7 +5,7 @@
 # Build output — regenerate with build.sh / install.sh
 Pika.app/
 
-# Regenerable from AppIcon.svg via make_icon.sh
+# Regenerable from the Mocha app icon via make_icon.sh
 AppIcon.iconset/
 
 .DS_Store

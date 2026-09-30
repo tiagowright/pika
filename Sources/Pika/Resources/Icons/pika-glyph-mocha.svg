@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="296" height="198" viewBox="24 74 296 198"
+     fill="none" role="img" aria-labelledby="title description">
+  <title id="title">Pika glyph, Catppuccin Mocha</title>
+  <desc id="description">The leaping origami pika from pika-origami-mocha.svg,
+    reduced to flat facets for the menu bar and the switcher's query row:
+    no tile, no gradients, no shading, and an enlarged eye so it survives
+    at 16pt. For dark backgrounds. pika-glyph-latte.svg is generated from
+    this file by icons/make_variants.py.
+  </desc>
+  <!-- Coordinates are the app icon's own (before its 5.5 translate), so
+       the two stay easy to compare. Body facets are drawn inside the body
+       silhouette rather than clipped to it: the glyph uses no clipPath.
+       Mocha: Rosewater #f5e0dc · Pink #f5c2e7 · Mauve #cba6f7
+              Maroon #eba0ac · Peach #fab387 · Lavender #b4befe
+              Crust #11111b -->
+  <g id="pika-glyph">
+    <path id="far-hind-foot" d="M78.5 211.1 53.4 222.2 29.2 257.6
+      C25.3 263.7 27.6 267.2 34.0 264.8
+      L63.8 249.2 84.1 228.2Z" fill="#cba6f7"/>
+    <path id="rear-paper-flap" d="M58.7 151.6 175.8 148.9 97.0 182.2
+      C82.6 176.6 68.8 168.8 56.4 159.1
+      C51.6 155.3 52.5 151.9 58.7 151.6Z" fill="#f5c2e7"/>
+    <path id="far-rounded-ear" d="M203.7 105.0
+      C195.7 95.7 200.8 83.1 212.2 80.0
+      C225.8 75.7 241.9 84.6 254.0 96.4
+      L274.0 119.0 217.3 107.0Z" fill="#eba0ac"/>
+    <path id="body" d="M43 255.8
+      L76.6 213.0 96.8 182.2 126.5 168.0 181.1 146.1 246.7 132.5
+      L217.3 106.0 273.7 118.7
+      C289.7 124.0 302.9 137.4 313.4 147.3
+      C316.6 150.2 317.0 151.3 315.0 155.2
+      L308.5 165.4
+      C303.1 173.4 294.2 179.6 282.3 185.7
+      L308.4 210.2
+      C314.6 216.3 311.4 221.5 304.0 219.8
+      L250.3 205.9 193.9 205.6 143.5 216.9 106.6 237.4 48.3 266.1
+      C41.2 269.6 38.4 265.8 42.3 258.0Z" fill="#b4befe"/>
+    <path id="upper-back" d="M126.4 168.1 181.0 146.0 246.9 132.3
+      214.3 182.5Z" fill="#f5c2e7"/>
+    <!-- Forehead and face as one facet. -->
+    <path id="head" d="M217.3 106.0 273.7 118.7
+      C289.7 124.0 302.9 137.4 313.4 147.3
+      C316.6 150.2 317.0 151.3 315.0 155.2
+      L308.5 165.4
+      C303.1 173.4 294.2 179.6 282.3 185.7
+      L214.2 182.4 246.7 132.5Z" fill="#f5e0dc"/>
+    <path id="forefoot" d="M282.3 185.7 308.4 210.2
+      C314.6 216.3 311.4 221.5 304.0 219.8
+      L250.3 205.9Z" fill="#fab387"/>
+    <path id="near-rounded-ear" d="M181.2 146.1
+      C165.4 145.0 150.8 136.7 146.1 121.0
+      C142.3 109.1 148.1 102.0 159.0 98.0
+      C175.3 92.0 194.8 95.3 211.6 103.0
+      C225.6 110.0 237.7 121.1 246.7 132.5
+      L188.1 145.1
+      C185.4 145.8 183.2 146.2 181.2 146.1Z" fill="#cba6f7"/>
+    <!-- The icon's eye is r 8.35; at 16pt that is barely two pixels. -->
+    <circle id="eye" cx="284" cy="150" r="13" fill="#11111b"/>
+  </g>
+</svg>

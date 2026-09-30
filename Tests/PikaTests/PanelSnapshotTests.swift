@@ -76,22 +76,14 @@ import Testing
                                            ("dark", NSColor(white: 0.15, alpha: 1), NSAppearance(named: .darkAqua)!)] {
                 let icon = PikaGlyph.menuBarImage(badged: badged)
                 let scale: CGFloat = 8
-                let size = NSSize(width: 18 * scale, height: 18 * scale)
+                let size = NSSize(width: icon.size.width * scale, height: icon.size.height * scale)
                 let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(size.width), pixelsHigh: Int(size.height), bitsPerSample: 8,
                                            samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
                 NSGraphicsContext.saveGraphicsState()
                 NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
                 appearance.performAsCurrentDrawingAppearance {
                     bg.setFill(); NSRect(origin: .zero, size: size).fill()
-                    if icon.isTemplate {
-                        // What the menu bar does with a template: tint it with the label colour.
-                        let tinted = NSImage(size: icon.size, flipped: false) { r in
-                            icon.draw(in: r); NSColor.labelColor.set(); r.fill(using: .sourceAtop); return true
-                        }
-                        tinted.draw(in: NSRect(origin: .zero, size: size))
-                    } else {
-                        icon.draw(in: NSRect(origin: .zero, size: size))
-                    }
+                    icon.draw(in: NSRect(origin: .zero, size: size))
                 }
                 NSGraphicsContext.restoreGraphicsState()
                 try rep.representation(using: .png, properties: [:])!

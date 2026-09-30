@@ -232,11 +232,12 @@ final class PikaView: NSView {
 
     // MARK: - Mouse
 
-    /// The pika-head mark in the query row. Clicking it opens Settings,
-    /// like the same mark in the menu bar.
+    /// The pika mark in the query row. Clicking it opens Settings, like
+    /// the same mark in the menu bar.
     private var glyphRect: NSRect {
-        NSRect(x: bounds.width - horizontalPadding - glyphSize, y: (inputRowHeight - glyphSize) / 2,
-               width: glyphSize, height: glyphSize)
+        let width = glyphSize * PikaGlyph.aspect
+        return NSRect(x: bounds.width - horizontalPadding - width, y: (inputRowHeight - glyphSize) / 2,
+                      width: width, height: glyphSize)
     }
 
     override func resetCursorRects() {
@@ -315,7 +316,7 @@ final class PikaView: NSView {
         x += (query as NSString).size(withAttributes: textAttrs).width
 
         // The menu bar icon's mark, so the panel and the icon read as one app.
-        PikaGlyph.draw(in: glyphRect, side: glyphSize, color: theme.fgDim, eyes: theme.bgInput)
+        PikaGlyph.draw(in: glyphRect, dark: theme.isDark)
 
         // Block cursor; blinks only if `[appearance.cursor] blink` is on.
         let cursorWidth = font.maximumAdvancement.width

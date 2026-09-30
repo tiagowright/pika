@@ -88,7 +88,7 @@ short. Full design in `SETTINGS.md` §1.
 
 | # | Requirement | Status |
 |---|---|---|
-| 4.1.1 | Template-image status item | ✅ The pika head drawn from `AppIcon.svg`'s own paths (`PikaGlyph.swift`), eyes cut out; an orange dot (non-template) when something needs the user. |
+| 4.1.1 | Status item | ✅ A simplified leaping pika (`pika-glyph-{mocha,latte}.svg`, drawn by `PikaGlyph.swift`) in Mocha on a dark menu bar and Latte on a light one; an orange dot when something needs the user. |
 | 4.1.2 | Permission state live, "not yet asked" distinct from "denied" | ✅ `PermissionCenter` — `AXIsProcessTrusted()`, and `AEDeterminePermissionToAutomateTarget` for Chrome, which checks without prompting. Re-checked on menu open, on leaving System Settings, on Chrome launch/quit. |
 | 4.1.3 | Deep links to the Accessibility and Automation panes | ✅ In use from the menu, Settings, and onboarding. Accessibility confirmed on macOS 26 by use; the Automation and Keyboard links are not yet confirmed. |
 | 4.1.4 | Re-enter first-run setup | ✅ Settings → Permissions → **Run Setup Again…**. |

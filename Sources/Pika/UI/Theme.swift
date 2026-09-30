@@ -11,6 +11,7 @@ enum ThemeMode: String, CaseIterable {
 /// Catppuccin, as named tokens per UX.md §7 so drawing code never names
 /// a colour directly.
 struct Theme: Equatable {
+    var isDark: Bool       // picks the Mocha or Latte artwork (PikaGlyph.swift)
     var bg: NSColor
     var bgInput: NSColor
     var border: NSColor
@@ -23,6 +24,7 @@ struct Theme: Equatable {
     var warn: NSColor
 
     static let catppuccinMocha = Theme(
+        isDark:    true,
         bg:        NSColor(hex: 0x1e1e2e),
         bgInput:   NSColor(hex: 0x181825),
         border:    NSColor(hex: 0x45475a),
@@ -41,6 +43,7 @@ struct Theme: Equatable {
     /// the choice is explained in SETTINGS.md §3.2 and pinned by
     /// ThemeContrastTests.
     static let catppuccinLatte = Theme(
+        isDark:    false,
         bg:        NSColor(hex: 0xeff1f5), // base
         bgInput:   NSColor(hex: 0xe6e9ef), // mantle
         border:    NSColor(hex: 0x9ca0b0), // overlay0 — surface1 vanishes against a light window behind

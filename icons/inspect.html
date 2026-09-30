@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pika Icon Inspection</title>
+<!-- Open this file straight from the repo: the images are the live SVGs in
+     Sources/Pika/Resources/Icons, so it always shows what the app ships.
+     After editing a Mocha SVG, run icons/make_variants.py and reload. -->
+<style>
+  :root {
+    --page: #f4f4f6; --card: #ffffff; --ink: #1d1d22; --dim: #6b6b76; --line: #dcdce2;
+    --mocha-base: #1e1e2e; --mocha-mantle: #181825; --mocha-text: #cdd6f4; --mocha-dim: #7f849c;
+    --latte-base: #eff1f5; --latte-mantle: #e6e9ef; --latte-text: #4c4f69; --latte-dim: #6c6f85;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --page: #141418; --card: #1d1d23; --ink: #ececf1; --dim: #9a9aa6; --line: #2e2e36; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 32px 16px 64px; background: var(--page); color: var(--ink);
+         font: 14px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif; }
+  main { max-width: 1080px; margin: 0 auto; }
+  h1 { font-size: 26px; margin: 0 0 4px; letter-spacing: -.01em; }
+  h2 { font-size: 17px; margin: 40px 0 4px; }
+  p.lede, p.note { color: var(--dim); margin: 0 0 16px; max-width: 72ch; }
+  code { font: 12.5px ui-monospace, "SF Mono", Menlo, monospace; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 20px; margin-top: 12px; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+  .label { font-size: 12px; color: var(--dim); margin: 0 0 10px; }
+  .label b { color: var(--ink); font-weight: 600; }
+  .hero { display: flex; align-items: center; justify-content: center; padding: 24px; border-radius: 10px; }
+  .hero img { width: min(100%, 320px); height: auto; }
+  .ladder { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 18px; padding: 18px; border-radius: 10px; }
+  .ladder figure { margin: 0; text-align: center; font-size: 11px; }
+  .ladder figcaption { margin-top: 6px; opacity: .65; }
+  .on-light { background: #ffffff; color: #1d1d22; }
+  .on-dark  { background: #1c1c1e; color: #ececf1; }
+  .on-mocha { background: var(--mocha-base); color: var(--mocha-text); }
+  .on-latte { background: var(--latte-base); color: var(--latte-text); }
+  .checker { background: repeating-conic-gradient(#c9c9cf 0 25%, #eeeef1 0 50%) 0 0 / 16px 16px; }
+
+  /* Menu bar mock-up, 1:1 in points */
+  .menubar { display: flex; justify-content: flex-end; align-items: center; gap: 14px; height: 24px; padding: 0 12px;
+             border-radius: 8px; font-size: 13px; }
+  .menubar.light { background: rgba(246,246,248,.92); color: #1d1d22; }
+  .menubar.dark  { background: rgba(38,38,42,.92); color: #f2f2f5; }
+  .status { position: relative; width: 24px; height: 16px; }
+  .status img { width: 24px; height: 16px; display: block; }
+  .status.badged::after { content: ""; position: absolute; right: 0; bottom: 0; width: 6px; height: 6px; border-radius: 50%;
+                          background: #ff9f0a; box-shadow: 0 0 0 1.5px var(--bar); }
+  .menubar.light .status { --bar: rgb(246,246,248); }
+  .menubar.dark  .status { --bar: rgb(38,38,42); }
+  .zoomed { transform: scale(3); transform-origin: right center; margin: 28px 0 28px auto; width: max-content; }
+
+  /* Switcher query row mock-up */
+  .panel { border-radius: 6px; overflow: hidden; font: 15px ui-monospace, "JetBrains Mono", Menlo, monospace; }
+  .panel.mocha { border: 1px solid #45475a; }
+  .panel.latte { border: 1px solid #9ca0b0; }
+  .query { display: flex; align-items: center; height: 40px; padding: 0 14px; gap: 8px; }
+  .panel.mocha .query { background: var(--mocha-mantle); color: var(--mocha-text); }
+  .panel.latte .query { background: var(--latte-mantle); color: var(--latte-text); }
+  .query .prompt { font-weight: 600; }
+  .panel.mocha .prompt { color: #cba6f7; } .panel.latte .prompt { color: #8839ef; }
+  .query .cursor { width: 9px; height: 17px; }
+  .panel.mocha .cursor { background: #cba6f7d9; } .panel.latte .cursor { background: #8839efd9; }
+  .query img { margin-left: auto; width: 24px; height: 16px; }
+  .row { height: 26px; display: flex; align-items: center; padding: 0 14px; font-size: 13px; }
+  .panel.mocha .row { background: var(--mocha-base); color: var(--mocha-dim); }
+  .panel.latte .row { background: var(--latte-base); color: var(--latte-dim); }
+
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  th { font-weight: 600; color: var(--dim); font-size: 12px; }
+  .sw { display: inline-flex; align-items: center; gap: 8px; }
+  .sw i { width: 18px; height: 18px; border-radius: 4px; border: 1px solid rgba(0,0,0,.12); display: inline-block; }
+  td.why { color: var(--dim); max-width: 46ch; }
+  ul.files { margin: 0; padding-left: 18px; }
+  ul.files li { margin: 4px 0; }
+  @media (max-width: 560px) { .zoomed { transform: scale(2); } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Pika icons</h1>
+  <p class="lede">Every icon variant the app ships, at the sizes and on the backgrounds where it appears.
+    Images load live from <code>Sources/Pika/Resources/Icons</code>.</p>
+
+  <h2>App icon</h2>
+  <p class="note">Pika.app's <code>AppIcon.icns</code> is built from Mocha by <code>make_icon.sh</code>. While Pika runs in
+    the light theme it swaps in Latte (Dock, ⌘Tab, Settings, onboarding).</p>
+  <div class="grid2">
+    <div class="card">
+      <p class="label"><b>Mocha</b> · pika-origami-mocha.svg · the source</p>
+      <div class="hero checker"><img src="../Sources/Pika/Resources/Icons/pika-origami-mocha.svg" alt="Mocha app icon"></div>
+    </div>
+    <div class="card">
+      <p class="label"><b>Latte</b> · pika-origami-latte.svg · generated</p>
+      <div class="hero checker"><img src="../Sources/Pika/Resources/Icons/pika-origami-latte.svg" alt="Latte app icon"></div>
+    </div>
+  </div>
+  <div class="card">
+    <p class="label"><b>Small sizes</b>, on a light and a dark desktop</p>
+    <div class="ladder on-light" id="ladder-light"></div>
+    <div class="ladder on-dark" id="ladder-dark" style="margin-top:8px"></div>
+  </div>
+
+  <h2>Glyph</h2>
+  <p class="note">The simplified pika: flat facets, no tile or gradients, and an enlarged eye. Mocha goes on dark
+    backgrounds, Latte on light. The menu bar picks by the menu bar's own appearance (which follows the wallpaper);
+    the query row picks by the Pika theme.</p>
+  <div class="grid2">
+    <div class="card">
+      <p class="label"><b>Mocha</b> · pika-glyph-mocha.svg · for dark backgrounds</p>
+      <div class="ladder on-mocha" data-glyph="mocha"></div>
+    </div>
+    <div class="card">
+      <p class="label"><b>Latte</b> · pika-glyph-latte.svg · for light backgrounds</p>
+      <div class="ladder on-latte" data-glyph="latte"></div>
+    </div>
+  </div>
+  <div class="card">
+    <p class="label"><b>Mismatched</b>: why there are two. Mocha's pastels wash out on light; Latte's darker ink sinks into dark.</p>
+    <div class="grid2">
+      <div class="ladder on-light" data-glyph="mocha" data-sizes="16,32,64"></div>
+      <div class="ladder on-dark" data-glyph="latte" data-sizes="16,32,64"></div>
+    </div>
+  </div>
+
+  <h2>Menu bar</h2>
+  <p class="note">24 × 16 pt status item, actual size and 3×. The orange dot means something needs attention.</p>
+  <div class="grid2">
+    <div class="card">
+      <p class="label"><b>Light menu bar</b> → Latte</p>
+      <div class="menubar light"><span>⌃</span><div class="status"><img src="../Sources/Pika/Resources/Icons/pika-glyph-latte.svg" alt=""></div><div class="status badged"><img src="../Sources/Pika/Resources/Icons/pika-glyph-latte.svg" alt=""></div><span>Tue 9:41</span></div>
+      <div class="menubar light zoomed"><div class="status"><img src="../Sources/Pika/Resources/Icons/pika-glyph-latte.svg" alt=""></div><div class="status badged"><img src="../Sources/Pika/Resources/Icons/pika-glyph-latte.svg" alt=""></div></div>
+    </div>
+    <div class="card">
+      <p class="label"><b>Dark menu bar</b> → Mocha</p>
+      <div class="menubar dark"><span>⌃</span><div class="status"><img src="../Sources/Pika/Resources/Icons/pika-glyph-mocha.svg" alt=""></div><div class="status badged"><img src="../Sources/Pika/Resources/Icons/pika-glyph-mocha.svg" alt=""></div><span>Tue 9:41</span></div>
+      <div class="menubar dark zoomed"><div class="status"><img src="../Sources/Pika/Resources/Icons/pika-glyph-mocha.svg" alt=""></div><div class="status badged"><img src="../Sources/Pika/Resources/Icons/pika-glyph-mocha.svg" alt=""></div></div>
+    </div>
+  </div>
+
+  <h2>Switcher query row</h2>
+  <p class="note">16 pt tall at the right of the input row; clicking it opens Settings.</p>
+  <div class="grid2">
+    <div class="card">
+      <p class="label"><b>Mocha theme</b></p>
+      <div class="panel mocha">
+        <div class="query"><span class="prompt">❯</span><span>pi</span><span class="cursor"></span><img src="../Sources/Pika/Resources/Icons/pika-glyph-mocha.svg" alt=""></div>
+        <div class="row">pika — README.md</div>
+      </div>
+    </div>
+    <div class="card">
+      <p class="label"><b>Latte theme</b></p>
+      <div class="panel latte">
+        <div class="query"><span class="prompt">❯</span><span>pi</span><span class="cursor"></span><img src="../Sources/Pika/Resources/Icons/pika-glyph-latte.svg" alt=""></div>
+        <div class="row">pika — README.md</div>
+      </div>
+    </div>
+  </div>
+
+  <h2>Mocha → Latte</h2>
+  <p class="note">Colours map by name, as the <a href="https://github.com/catppuccin/catppuccin/blob/main/docs/style-guide.md">Catppuccin style guide</a>
+    asks, using the <a href="https://github.com/catppuccin/palette/blob/main/palette.json">official palette</a>.
+    Three elements keep their role instead of their name; <code>icons/make_variants.py</code> lists them.</p>
+  <div class="card">
+    <table>
+      <thead><tr><th>Name</th><th>Mocha</th><th>Latte</th><th>Used for</th></tr></thead>
+      <tbody id="palette"></tbody>
+    </table>
+  </div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Exception</th><th>By name</th><th>Instead</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td><code>#tile</code> gradient</td>
+            <td><span class="sw"><i style="background:#ccd0da"></i><i style="background:#eff1f5"></i><i style="background:#e6e9ef"></i></span></td>
+            <td><span class="sw"><i style="background:#eff1f5"></i><i style="background:#e6e9ef"></i><i style="background:#dce0e8"></i></span></td>
+            <td class="why">Surface0 → Base → Mantle is light-to-dark in Mocha but dark-light-dark in Latte. Base → Mantle → Crust keeps the light in the top left.</td></tr>
+        <tr><td><code>#fold-shade</code></td>
+            <td><span class="sw"><i style="background:#eff1f5"></i>Base</span></td>
+            <td><span class="sw"><i style="background:#4c4f69"></i>Text</span></td>
+            <td class="why">A translucent shadow must darken; Latte's Base would lighten it.</td></tr>
+        <tr><td><code>#eye</code> (icon and glyph)</td>
+            <td><span class="sw"><i style="background:#dce0e8"></i>Crust</span></td>
+            <td><span class="sw"><i style="background:#4c4f69"></i>Text</span></td>
+            <td class="why">The darkest ink on the pika. Latte's Crust is pale grey.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Previous icon</h2>
+  <p class="note">Kept in <code>icons/legacy/</code> (the SVG and the icns built from it); nothing in the app uses it.</p>
+  <div class="card"><div class="ladder checker"><figure><img src="legacy/AppIcon.svg" width="128" height="128" alt="Previous app icon"><figcaption>AppIcon.svg</figcaption></figure></div></div>
+
+  <h2>Files</h2>
+  <div class="card">
+    <ul class="files">
+      <li><code>Sources/Pika/Resources/Icons/pika-origami-mocha.svg</code> — app icon, source of the icns</li>
+      <li><code>Sources/Pika/Resources/Icons/pika-origami-latte.svg</code> — app icon, light theme (generated)</li>
+      <li><code>Sources/Pika/Resources/Icons/pika-glyph-mocha.svg</code> — glyph for dark backgrounds, hand-simplified</li>
+      <li><code>Sources/Pika/Resources/Icons/pika-glyph-latte.svg</code> — glyph for light backgrounds (generated)</li>
+      <li><code>icons/make_variants.py</code> — writes the two Latte files from the Mocha ones</li>
+      <li><code>make_icon.sh</code> — builds <code>AppIcon.icns</code> from the Mocha app icon</li>
+    </ul>
+  </div>
+</main>
+<script>
+  const DIR = "../Sources/Pika/Resources/Icons/";
+  function ladder(el, file, sizes, aspect) {
+    for (const s of sizes) {
+      const f = document.createElement("figure");
+      const img = new Image();
+      img.src = DIR + file; img.alt = "";
+      img.style.width = Math.round(s * aspect) + "px"; img.style.height = s + "px";
+      const c = document.createElement("figcaption"); c.textContent = s + " pt";
+      f.append(img, c); el.append(f);
+    }
+  }
+  for (const [id] of [["ladder-light"], ["ladder-dark"]]) {
+    const el = document.getElementById(id);
+    ladder(el, "pika-origami-mocha.svg", [16, 32, 64, 128], 1);
+    ladder(el, "pika-origami-latte.svg", [16, 32, 64, 128], 1);
+  }
+  for (const el of document.querySelectorAll("[data-glyph]")) {
+    const sizes = (el.dataset.sizes || "16,24,32,64,128").split(",").map(Number);
+    ladder(el, "pika-glyph-" + el.dataset.glyph + ".svg", sizes, 296 / 198);
+  }
+  const palette = [
+    ["Rosewater", "#f5e0dc", "#dc8a78", "face, glyph head"], ["Flamingo", "#f2cdcd", "#dd7878", "rear flap, chest light, foreleg"],
+    ["Pink", "#f5c2e7", "#ea76cb", "back, flaps, ears"], ["Mauve", "#cba6f7", "#8839ef", "near ear, body"],
+    ["Maroon", "#eba0ac", "#e64553", "far ear, chest, nose"], ["Peach", "#fab387", "#fe640b", "forehead, forefoot"],
+    ["Yellow", "#f9e2af", "#df8e1d", "forehead, face"], ["Blue", "#89b4fa", "#1e66f5", "tile light"],
+    ["Lavender", "#b4befe", "#7287fd", "body, haunch, rim, ground"], ["Surface0", "#313244", "#ccd0da", "tile, rim"],
+    ["Base", "#1e1e2e", "#eff1f5", "tile, fold shade"], ["Mantle", "#181825", "#e6e9ef", "tile"],
+    ["Crust", "#11111b", "#dce0e8", "eye"],
+  ];
+  const tbody = document.getElementById("palette");
+  for (const [name, m, l, use] of palette) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${name}</td><td><span class="sw"><i style="background:${m}"></i><code>${m}</code></span></td>` +
+                   `<td><span class="sw"><i style="background:${l}"></i><code>${l}</code></span></td><td class="why">${use}</td>`;
+    tbody.append(tr);
+  }
+</script>
+</body>
+</html>
