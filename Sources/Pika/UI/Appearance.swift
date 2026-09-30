@@ -3,7 +3,8 @@ import AppKit
 /// Turns `[appearance] theme` into the colours on screen (SETTINGS.md
 /// §3.1). In `auto` it follows macOS, repainting live when the system
 /// switches between Light and Dark. It also sets `NSApp.appearance`, so
-/// Pika's own windows (settings, onboarding) follow the same choice.
+/// Pika's own windows (settings, onboarding) follow the same choice, and
+/// swaps the app icon to match.
 ///
 /// Main thread only.
 final class Appearance {
@@ -50,6 +51,7 @@ final class Appearance {
         let newTheme = Theme.resolve(mode, systemIsDark: systemIsDark)
         guard newTheme != theme else { return }
         theme = newTheme
+        PikaArt.applyAppIcon(for: newTheme)
         observers.forEach { $0(newTheme) }
     }
 }

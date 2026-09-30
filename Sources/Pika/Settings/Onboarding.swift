@@ -217,6 +217,7 @@ private struct ChecklistPage: View {
 
 private struct TryItPage: View {
     @Bindable var model: SettingsModel
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         VStack(spacing: 28) {
@@ -235,9 +236,10 @@ private struct TryItPage: View {
                 .font(.title3).multilineTextAlignment(.center).foregroundStyle(.secondary)
 
             HStack(alignment: .center, spacing: 12) {
-                Image(nsImage: PikaGlyph.menuBarImage(badged: false)).renderingMode(.template)
-                    .foregroundStyle(.secondary)
-                Text("To get back to Settings, click the pika head in the menu bar, or open Pika from Spotlight.")
+                if let glyph = PikaGlyph.image(dark: colorScheme == .dark) {
+                    Image(nsImage: glyph).resizable().frame(width: 16 * PikaGlyph.aspect, height: 16)
+                }
+                Text("To get back to Settings, click the pika in the menu bar, or open Pika from Spotlight.")
                     .font(.callout).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }

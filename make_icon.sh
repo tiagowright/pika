@@ -1,10 +1,10 @@
 #!/bin/bash
-# Regenerates AppIcon.icns from AppIcon.svg. Re-run this after editing
+# Regenerates AppIcon.icns from the Mocha app icon. Re-run this after editing
 # the SVG, then re-run build.sh/install.sh to pick up the new icon.
 set -euo pipefail
 cd "$(dirname "$0")"
 
-SVG="AppIcon.svg"
+SVG="Sources/Pika/Resources/Icons/pika-origami-mocha.svg"
 ICONSET="AppIcon.iconset"
 PNG_SRC="/tmp/pika_icon_src.png"
 

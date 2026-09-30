@@ -12,7 +12,7 @@ private let log = Logger(subsystem: "io.github.tiagowright.pika", category: "men
 ///
 /// Main thread only.
 final class StatusItemController: NSObject, NSMenuDelegate {
-    private let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+    private let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength) // the glyph is wider than tall
     private let hotKey: HotKeyManager
     private let openSettings: (SettingsModel.Pane?) -> Void
     private var isBadged: Bool?
