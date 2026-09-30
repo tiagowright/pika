@@ -1,7 +1,7 @@
 # Pika
 
 Pika is a blazing-fast, keyboard-first window finder for macOS. To switch
-to any window, press `ctrl+space`, type a few letters, then `Enter`.
+to any window, press `Ctrl+Space`, type a few letters, then `Enter`.
 
 TK: screenshots
 
@@ -10,22 +10,18 @@ such as Zed and VS Code to the windows you already have open.
 Pika lists open windows across Spaces and, when
 enabled, individual Chrome tabs. 
 
-It is blazing fast, even with a hundred
-open windows and tabs, responding in under 30ms to most keypress, far faster
+It is blazing fast, responding in under 30ms to most keypress, far faster
 than humans can perceive. 
 
-The app is local by design, and your data
-never leaves your machine.
+The app is local by design, and your data never leaves your machine.
 
 It is keyboard driven:
 `Ctrl+Space` brings up the switcher, which allows you to search for
 the window using a few letters and fuzzy matching, then `Enter` to switch.
 For example, after `Ctrl+Space`:
-- `zp` finds the window `Zed · pika — README.md`, because both
-characters landed on word beginnings.
+- `zp` finds the window `Zed · pika — README.md`
 - `fp` finds the window `Finder · pika`
-- `c p` finds the tab `Google Chrome · pika/README.md at main`
-- `Enter` brings you back to the last window you were.
+- `c p` finds the specific tab `Google Chrome · pika/README.md at main`
 
 ## Blazing fast
 
@@ -44,9 +40,7 @@ the matches immediately.
 
 Measured on an Apple M5 running macOS 26.6.2, release build, over 200
 rounds of hotkey → four letters → four backspaces → `Enter` (1,600
-keystrokes). Each time runs from the key event's timestamp until the frame
-is handed to the window server; the display shows it at its next refresh.
-Reproduce with `bench/latency.sh`.
+keystrokes). Reproduce with `bench/latency.sh`.
 
 ## Keys
 
@@ -71,9 +65,29 @@ and puts an orange dot on its menu bar icon; the menu links to *System
 Settings → Keyboard → Keyboard Shortcuts → Input Sources*, where you can
 clear it. Or record a different hotkey in Settings → General.
 
+## Install
+
+TK: screenshot of the setup wizard
+
+Install directly from github. Tested on macOS 26, Apple Silicon, with 
+Swift 6.4 (command line tools is enough).
+
+```sh
+git clone https://github.com/tiagowright/pika.git
+cd pika
+./install.sh
+```
+
+On first launch, a short setup walks through what Pika needs:
+Accessibility (required), Chrome tabs and starting at login (both
+optional, each with a Skip), and a check that your hotkey works. It ends
+by having you press the hotkey once. Run it again any time from
+Settings → Permissions → *Run Setup Again*.
+
 ## Menu bar and Settings
 
-Settings are available from the "leaping pika" icon in the menu bar, or the
+Settings are available from the "leaping pika" icon in the menu bar 
+(TK: leaping pika icon), or the
 same icon in the switcher, or through the `⌘,` shortcut. 
 You can configure the hotkeys, inspect the 
 permissions, change appearance, switch to dark mode, change how the window
@@ -93,26 +107,6 @@ always rely on your text editor as well.
 | **Accessibility** | Yes | Reads window titles and raises windows. First-run setup explains it before macOS asks, and Pika starts itself the moment you grant it — no relaunch needed. |
 | **Automation → Google Chrome** | Optional | Lets Pika list individual Chrome *tabs*. Skip it in setup, or deny it, and you get one row per Chrome *window* instead. |
 | **Screen Recording** | Never asked | Titles come from the Accessibility API precisely so this second scary prompt isn't needed. |
-
-## Install
-
-TK: screenshot of the setup wizard
-
-No downloadable installers available yet. The app is currently for those
-ready to install from github. Tested on macOS 26, Apple Silicon, with 
-Swift 6.4 (command line tools is enough).
-
-```sh
-git clone https://github.com/tiagowright/pika.git
-cd pika
-./install.sh
-```
-
-On first launch, a short setup walks through what Pika needs:
-Accessibility (required), Chrome tabs and starting at login (both
-optional, each with a Skip), and a check that your hotkey works. It ends
-by having you press the hotkey once. Run it again any time from
-Settings → Permissions → *Run Setup Again*.
 
 ## Privacy and local data
 
