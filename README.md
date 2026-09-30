@@ -52,6 +52,7 @@ the matches immediately.
 | `Ctrl+W` | Delete the previous word |
 | `Ctrl+U` | Clear the query |
 | `Backspace` | Delete a character |
+| `⌘,` | Open Settings (so does clicking the pika head in the switcher) |
 
 Spaces mean AND: `z pika` requires both tokens to match, in any order.
 
@@ -60,7 +61,7 @@ Spaces mean AND: `z pika` requires both tokens to match, in any order.
 panel doesn't appear, that's almost certainly why. Pika detects the clash
 and puts an orange dot on its menu bar icon; the menu links to *System
 Settings → Keyboard → Keyboard Shortcuts → Input Sources*, where you can
-clear it. Or pick a different hotkey in the config file.
+clear it. Or record a different hotkey in Settings → General.
 
 ## Menu bar and Settings
 
@@ -102,6 +103,7 @@ Monitoring are deliberately not requested.
 | `~/.config/pika/config.toml` | Your settings |
 | `~/Library/Application Support/io.github.tiagowright.pika/mru.json` | Recency data, including window titles and full Chrome tab URLs. Entries older than 30 days are dropped |
 | `~/Library/Application Support/io.github.tiagowright.pika/learned.json` | Queries you typed and the target you chose. Fades by 2% a day; at most 500 queries |
+| `~/Library/Application Support/io.github.tiagowright.pika/state.json` | Setup progress, skipped setup items, and the last Chrome permission answer |
 | `~/Library/Caches/io.github.tiagowright.pika/icons/` | App icons as PNGs, named by bundle ID |
 
 **Read these before sharing them.** Chrome URLs can include query strings,
@@ -112,8 +114,9 @@ These files are plain local JSON; Pika does not add its own encryption.
 In the current development build, window titles may also appear in the macOS
 unified log. Do not attach Pika logs to a bug report without reviewing them.
 
-To reset learned ranking, delete `learned.json`. There is no `--forget` flag
-yet. To remove all local data, use the uninstall instructions below.
+**Settings → Privacy & Data** lists each file with a *Show in Finder*
+button, and can clear recency, forget learned queries, or delete the icon
+cache. To remove all local data, use the uninstall instructions below.
 
 ## Build and install
 
@@ -130,14 +133,39 @@ cd pika
 `install.sh` builds, tells you what it's about to do, and asks before it
 quits a running Pika and replaces `/Applications/Pika.app`. 
 Installing to `/Applications` gives Pika a stable app location for Accessibility
-permissions. To have Pika start when you log in, turn on **Start Pika at
-login** in Settings → General.
+permissions.
+
+On first launch, a short setup walks through what Pika needs:
+Accessibility (required), Chrome tabs and starting at login (both
+optional, each with a Skip), and a check that your hotkey works. It ends
+by having you press the hotkey once. Run it again any time from
+Settings → Permissions → *Run Setup Again*.
 
 ## Rebuilding Pika
 
 If Pika stops raising windows after a rebuild, its Accessibility permission may
 have changed with its code signature. See [code-signing guidance](CODE_SIGNING.md)
 for the cause and a stable local-development setup.
+
+## Running the tests
+
+```sh
+swift test
+```
+
+With only the Command Line Tools installed, `swift test` sometimes fails
+with *plugin for module 'TestingMacros' not found* on every test. A rerun
+usually passes; that error can also hide an ordinary compile error in a
+test file. If Xcode is installed, running the same command with its
+toolchain is reliable and shows the real error:
+
+```sh
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift test
+```
+
+Screenshot tests of the switcher, the menu bar icon, Settings, and setup
+are opt-in: set `PIKA_SNAPSHOT_DIR` to a folder, and they write PNGs there.
+The Settings and setup ones briefly put windows on screen.
 
 ## Configuration
 
@@ -177,6 +205,8 @@ ignored and can be deleted.
 
 ## Uninstall
 
+Quit Pika from its menu bar icon (or with the first command below), then:
+
 ```sh
 pkill -f '/Applications/Pika.app/Contents/MacOS/Pika'
 rm -rf /Applications/Pika.app
@@ -195,6 +225,10 @@ Items**, and check **Privacy & Security → Accessibility**.
 Named here rather than discovered by you. `requirements/SHIPPING.md` has the
 full list with reasoning.
 
+- **Resetting a stuck Accessibility grant needs Terminal.** If the switch
+  in System Settings won't stay on, Settings → Permissions shows the
+  `tccutil reset` command to copy; Pika can't yet run it for you.
+- **No downloadable build yet**, so no notarization: install from source.
 - **Window titles for other Spaces can be stale.** Accessibility titles are
   Space-scoped, so a window you haven't visited since renaming shows its old
   title until you do.

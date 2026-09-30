@@ -12,6 +12,12 @@ re-entry point for permissions and theme · privacy disclosure lives in
 the README, **not** a separate `PRIVACY.md` · Catppuccin **Latte** ships
 alongside Mocha in v1.
 
+**Decisions taken** (2026-09-28, detailed in `SETTINGS.md`): a settings
+window ships in v1, reversing its deferral in §10 · onboarding covers
+every permission in one checklist · `theme = "auto"` is the default ·
+`config.toml` stays the single source of truth, and Pika edits it in
+place. §4.1–4.4 have shipped; their sections now record what was built.
+
 Everything here is a blocker unless marked *Nice to have*. Anything not
 listed is explicitly deferred — see §10. Open decisions are collected in
 §9; the body references them as **Q1**…**Q14**.
@@ -23,9 +29,9 @@ listed is explicitly deferred — see §10. Open decisions are collected in
 Pika is unusually demanding of a new user's trust. It is an invisible
 background agent, it asks for Accessibility — the most powerful
 permission macOS grants — it reads every window title on the machine and
-every Chrome tab title and URL, it registers itself to launch at login,
-and it currently offers no way to quit or uninstall it. Each of those is
-defensible.
+every Chrome tab title and URL, and it runs at login. Each of those is
+defensible. (The two gaps this list originally named — silent login-item
+registration and no way to quit — are closed by §4.1.)
 
 The other half of the list is mechanical: the repo does not build for
 anyone else yet.
@@ -65,253 +71,107 @@ at; source is for people who want to read it first.
 
 ### 4.1 The menu bar item is the control surface
 
-Pika is `LSUIElement` with `.accessory` activation policy: no Dock icon,
-no menu bar presence, no quit command. Once installed it can only be
-stopped from Activity Monitor, and `AppDelegate.registerAsLoginItem()`
-silently calls `SMAppService.register()` on first launch, so it comes
-back at every login.
-
-An `NSStatusItem` answers this, and — now that permissions (§4.3) and
-themes (§4.4) both need a re-entry point — it is the only place those can
-live. It ships **visible by default in v1**; an option to hide it is
-deferred (§10) precisely because it is the only way back into the
-permission flow for a user who denied.
-
-**Menu contents.** Everything below is a blocker unless marked.
+✅ **Shipped** (2026-09-28/29). The
+design moved on from the menu sketched here: permissions, launch at
+login, and data actions live in a settings window, and the menu stays
+short. Full design in `SETTINGS.md` §1.
 
 ```
-  Pika 0.1.0                                  (disabled, version from 3.4)
-  ────────────────────────────────────────
-  Accessibility          ✓ granted           (live, disabled row)
-  Chrome Automation      ✗ denied            (live, disabled row)
-  Open Accessibility Settings…
-  Open Automation Settings…
-  Run first-run setup again…
-  Reset permissions…                          (see below)
-  ────────────────────────────────────────
-  Theme                ▸  ✓ Mocha (dark)
-                          Latte (light)
-                          Follow system        (see Q11)
-  ────────────────────────────────────────
-  Open config…                                 (~/.config/pika/config.toml)
-  Reload config
-  Launch at login        ✓                     (SMAppService.mainApp.status)
-  ────────────────────────────────────────
-  Forget learned queries…                      (LearnedStore.forgetAll, exists)
-  Open data folder…                            (Nice to have)
-  ────────────────────────────────────────
-  Quit Pika
+  Pika 0.1                                    (disabled, from CFBundleShortVersionString)
+  ⚠ Grant Accessibility…                      (problem rows appear only when something is wrong)
+  ───────────────
+  Settings…                               ⌘,
+  Theme              ▸  Auto (follow macOS) / Dark — Mocha / Light — Latte
+  ───────────────
+  Quit Pika                               ⌘Q
 ```
 
-| # | Requirement |
-|---|---|
-| 4.1.1 | Status item uses a **template** image (monochrome, `isTemplate = true`) so it reads correctly in both menu bar appearances. The full-colour `AppIcon.svg` cannot be used as-is. |
-| 4.1.2 | Permission rows reflect live state, recomputed each time the menu opens: `AXIsProcessTrusted()` for Accessibility, and for Automation the last Apple Event result from `ChromeTabSource` (`errAEEventNotPermitted`, `-1743`) — not a guess. A third state, "not yet asked", is distinct from "denied" and must be shown as such. |
-| 4.1.3 | **Open Accessibility Settings…** opens `x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility`; **Open Automation Settings…** opens `…?Privacy_Automation`. Verify both anchors resolve on the macOS version you ship against — Settings pane anchors have broken before. |
-| 4.1.4 | **Run first-run setup again…** re-enters the §4.3 flow from O1, regardless of the stored onboarding state, without resetting learned data or config. This is the "I denied it and want another go" path. |
-| 4.1.5 | **Reset permissions…** exists because macOS will not re-prompt once a decision is recorded: `AXIsProcessTrustedWithOptions(prompt: true)` shows nothing the second time. The only true reset is `tccutil reset Accessibility io.github.tiagowright.pika` (and `tccutil reset AppleEvents io.github.tiagowright.pika`), which requires Pika to restart afterwards. Verify whether Pika may spawn `tccutil` against its own bundle ID on the shipping macOS; if it may, offer "Reset and relaunch" behind a confirmation. If it may not, the menu item shows the exact command with a **Copy** button and a one-line explanation. Do not ship a button that silently does nothing. See **Q12**. |
-| 4.1.6 | **Launch at login** is a checkbox reflecting `SMAppService.mainApp.status`, and `registerAsLoginItem()` must stop firing silently at launch — registration happens only from onboarding (§4.3, O4) or this checkbox. |
-| 4.1.7 | **Reload config** re-reads `config.toml` and applies it without a relaunch. Note that `PanelController` and `AppDelegate` each call `Config.loadOrCreateDefault()` separately today; config must become a single observable source of truth before this item or the theme switcher can work. |
-| 4.1.8 | An `uninstall.sh` (and a README section) that removes `/Applications/Pika.app`, unregisters the login item, deletes `~/Library/Application Support/io.github.tiagowright.pika`, `~/Library/Caches/io.github.tiagowright.pika`, and `~/.config/pika`, runs the two `tccutil reset` lines, and tells the user to check System Settings → Privacy & Security → Accessibility and → Automation by hand. |
+| # | Requirement | Status |
+|---|---|---|
+| 4.1.1 | Template-image status item | ✅ The pika head drawn from `AppIcon.svg`'s own paths (`PikaGlyph.swift`), eyes cut out; an orange dot (non-template) when something needs the user. |
+| 4.1.2 | Permission state live, "not yet asked" distinct from "denied" | ✅ `PermissionCenter` — `AXIsProcessTrusted()`, and `AEDeterminePermissionToAutomateTarget` for Chrome, which checks without prompting. Re-checked on menu open, on leaving System Settings, on Chrome launch/quit. |
+| 4.1.3 | Deep links to the Accessibility and Automation panes | ✅ In use from the menu, Settings, and onboarding. Accessibility confirmed on macOS 26 by use; the Automation and Keyboard links are not yet confirmed. |
+| 4.1.4 | Re-enter first-run setup | ✅ Settings → Permissions → **Run Setup Again…**. |
+| 4.1.5 | Reset permissions | 🟡 Settings shows the `tccutil reset` command with a **Copy** button. Whether Pika may run it on itself (**Q12**) is still untested. |
+| 4.1.6 | Launch at login opt-in | ✅ Never registered silently: only from onboarding or Settings → General, which reflects `SMAppService.mainApp.status`. |
+| 4.1.7 | Reload config without relaunch | ✅ Better than a menu item: `ConfigStore` watches `config.toml` and applies edits on save. One live config replaces the separate loads. |
+| 4.1.8 | `uninstall.sh` | ❌ Not done. The README's uninstall commands remain the path. |
 
 ### 4.2 Silent failures must speak
 
-`HotKeyManager.register()` discards the `OSStatus` from
-`RegisterEventHotKey`. The default hotkey is `Ctrl+Space`, which macOS
-assigns to Input Sources switching out of the box —
-`TECHNICAL.md` §13 lists this collision as "Low, **certain**". So the
-likely first-run experience for a new user is: install, grant the
-scariest permission macOS has, press the hotkey, nothing happens, no
-error, no log they will find.
+✅ **Shipped.**
 
-- Check the `OSStatus` and surface a failure the user can act on: which
-  hotkey failed, that another app likely owns it, and where to change it.
-  Onboarding step O4 (§4.3) is where this lands for a new user; for a
-  running instance, the menu bar item shows a warning badge.
-- Do the same for the other paths that currently fail into silence:
-  a config file that fails to parse (today, unparseable lines are
-  skipped and defaults are used with no notice) and an unparseable
-  `hotkey =` value.
-- **`theme =` is currently parsed by nobody.** `Config.defaultText`
-  writes `theme = "catppuccin-mocha"` into every new config file and
-  `Config.parse` never reads the key — so today a user who edits it sees
-  no change and no message. §4.4 fixes the feature; the *reporting* rule
-  is this one: an unrecognised key or value in `config.toml` must be
-  reported, not ignored.
+- **Hotkey.** `HotKeyManager` keeps the `RegisterEventHotKey` result, and
+  `SystemShortcuts` reads `com.apple.symbolichotkeys` for clashes with
+  macOS's own shortcuts. That second check matters most:
+  `RegisterEventHotKey` *succeeds* for `ctrl+space` while macOS's Input
+  Sources shortcut takes the keypress first. Either problem badges the
+  menu bar icon, and the menu and Settings → General name the clash and
+  offer the fix (a hotkey recorder, or the Keyboard Shortcuts pane).
+- **Config.** Malformed lines, unknown keys and sections, wrong types,
+  out-of-range values, duplicate keys and bad hotkeys are each reported
+  with a line number, in the menu and as a banner in Settings. The rest
+  of the file still applies. Leftover keys that do nothing (`font`) are
+  notices and don't badge.
+- **`theme =`** is read (§4.4).
 
 ### 4.3 Onboarding (first run)
 
-`UX.md` §10 specifies a styled first-run panel.
-`AppDelegate.promptForAccessibilityAndWait()` currently fires the raw
-system prompt and polls
-`AXIsProcessTrusted()` every second forever, with no UI and no handling
-of denial. This section replaces that with a designed flow.
+✅ **Shipped** (2026-09-29). The O1–O5 terminal-panel screens planned here
+were replaced by a checklist-first design in a native window; the
+reasoning is in `SETTINGS.md` §2.2, and the shipped behaviour is in
+`SETTINGS.md` §4 step 6. In short:
 
-**Principles.**
+1. **Welcome**: what Pika does, what it will ask for, and what it never
+   asks for (Screen Recording, Input Monitoring).
+2. **Checklist**: Accessibility (required), Chrome tabs (optional),
+   Start at login (optional), and the hotkey (required). Each row shows
+   live status, why it's needed, and one button that does the right thing
+   for its state. Optional rows can be skipped; skipping Chrome also sets
+   `chrome_tabs = false`, so the Automation prompt never arrives
+   unexplained. If Accessibility is still off 20 s after the user was
+   sent to System Settings, the row expands into troubleshooting (the old
+   O3). Continue needs Accessibility and a hotkey that will fire.
+3. **Try it**: pressing the hotkey finishes setup and opens the switcher.
 
-1. Onboarding is the only time Pika appears without being summoned.
-2. It is the same panel, in the same visual language — JetBrains Mono,
-   Catppuccin, 680pt wide, `❯` prompt, hard edges. Not an Aqua sheet, not
-   a wizard with a Back button.
-3. It asks for exactly one permission. Chrome Automation is not part of
-   the wall (O5).
-4. Every screen is one Enter away from the next, and `esc` always exits.
-5. It ends by having the user succeed at the actual product once.
+Differences from the original plan, all decided in `SETTINGS.md`:
 
-**Placement and focus.** Same rules as the main panel: the screen
-containing the mouse, centred horizontally, ~38% from the top. Unlike the
-main panel it must accept keyboard focus normally and may activate the
-app, because the user is coming *to* it rather than passing through it
-(see **Q3**).
-
----
-
-**O1 — Why (shown when `!AXIsProcessTrusted()` on first launch)**
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│  ❯ pika                                                  1/2 │
-├──────────────────────────────────────────────────────────────┤
-│                                                              │
-│   switch windows by name. ctrl+space, two letters, enter.    │
-│                                                              │
-│   pika needs Accessibility to do exactly two things:         │
-│     ▌ read the title of each open window                     │
-│     ▌ raise the window you pick                              │
-│                                                              │
-│   it never uses Screen Recording or Input Monitoring,        │
-│   and nothing it reads leaves this machine.                  │
-│                                                              │
-│   ▌ Open System Settings          ⏎                          │
-│     What pika reads                r                         │
-│     Quit                          esc                        │
-└──────────────────────────────────────────────────────────────┘
-```
-
-- `⏎` calls `AXIsProcessTrustedWithOptions(prompt: true)` *and* opens the
-  Accessibility pane deep link, then advances to O2.
-- `r` opens the README's privacy section in the browser (§4.5). The
-  GitHub anchor is the canonical copy; do not duplicate the prose here.
-- `esc` quits without registering a login item. See **Q1**.
-
-**O2 — Waiting**
-
-The same panel, body replaced:
-
-```
-   waiting for the switch to flip…
-
-   System Settings → Privacy & Security → Accessibility → Pika
-
-   ▌ Open System Settings again       ⏎
-     Quit                            esc
-```
-
-Polling continues (the existing 1s timer is fine here — it is now
-visible, which was the actual problem). On grant, advance to O4
-immediately; do not require a click.
-
-**O3 — Stuck / denied**
-
-After `N` seconds in O2 without a grant (**Q7**), or immediately if Pika
-is present in the Accessibility list but switched off, the body becomes
-troubleshooting:
-
-```
-   still not granted. two things usually explain it:
-
-   ▌ pika isn't in the list       drag Pika.app into it, or use +
-   ▌ pika is in the list, off     toggle it off and on once
-
-   if pika is greyed out or the switch won't stick, the permission
-   record is stale:
-
-     tccutil reset Accessibility io.github.tiagowright.pika        ▌ Copy
-
-   ▌ Open System Settings          ⏎
-     Reset and relaunch pika        r      (subject to 4.1.5 / Q12)
-     Quit                          esc
-```
-
-This is the screen the current code does not have, and the one a
-first-time user is most likely to need.
-
-**O4 — Ready**
-
-Reached from O2/O3 on grant, or directly at first launch when
-Accessibility is already trusted (a reinstall, or a rebuild under a
-stable identity) but onboarding has not been completed.
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│  ❯ pika                                                  2/2 │
-├──────────────────────────────────────────────────────────────┤
-│                                                              │
-│   granted. press ctrl+space to try it.                       │
-│                                                              │
-│   [✓] start pika when i log in                s              │
-│   [ ] read chrome tab titles too              c              │
-│                                                              │
-│   pika lives in the menu bar. everything — quitting,         │
-│   permissions, themes — is there.            ▌ (arrow to it) │
-│                                                              │
-│   ▌ Done                          ⏎                          │
-└──────────────────────────────────────────────────────────────┘
-```
-
-- **Launch at login is opt-in here** (§4.1.6). Default state per **Q2**.
-- The Chrome checkbox is a *consent to ask*, not the permission itself.
-  Ticking it means the first Apple Event may fire (O5); leaving it clear
-  writes `chrome_tabs = false` (which requires the config writer — **Q9**).
-- If `RegisterEventHotKey` failed (§4.2), this screen says so instead of
-  "press ctrl+space", names the hotkey, says another app likely owns it,
-  and points at `~/.config/pika/config.toml` — or offers inline capture
-  of a replacement (**Q8**).
-- Pressing the hotkey here dismisses onboarding and shows the real panel
-  (**Q4**).
-
-**O5 — Chrome Automation, later and in context**
-
-Not part of the wall. It fires on the first Chrome poll after onboarding
-completes, and only if the O4 checkbox was ticked. Apple's own dialog is
-what the user sees; the question is whether Pika says anything first
-(**Q5**). Denial is not an error state: `ChromeTabSource` already backs
-off and retries, windows are still listed by title, and the menu bar
-shows Automation as denied with a way back.
-
-**Completion state.** `~/Library/Application Support/io.github.tiagowright.pika/state.json`
-holds `{ "onboardingVersion": 1, "completedAt": …, "hotkeyVerified": … }`.
-Onboarding runs when the file is absent or its version is lower than the
-build's (so a future release that needs a new permission can re-run just
-that step), or when invoked from the menu (§4.1.4). Never otherwise.
-
-**Non-goals.** No multi-page tour, no animation, no splash on later
-launches, no "rate us", no telemetry of any step.
-
-See **Q1**–**Q10**.
+- No system prompt fires at launch; the Accessibility row asks.
+- Chrome Automation is part of the checklist rather than a surprise
+  after it (settles Q5).
+- While Setup or Settings is open, Pika is a regular app (Dock icon,
+  ⌘Tab) so the user can go to System Settings and come back, and it
+  activates outright (`AppPresence.swift`).
+- Closing Setup early counts as done once Accessibility is granted;
+  otherwise it returns next launch, and the menu bar badge points the way.
+- **Completion state**: `state.json` holds `onboardingVersion`,
+  `onboardingCompletedAt`, `skipped`, and the last Chrome answer.
+  Highlighting only new rows for upgraders (Q10) waits for a second
+  onboarding version.
 
 ### 4.4 Catppuccin Latte (new feature)
 
-Mocha-only is a reasonable default and a poor look on a machine in Light
-Mode. Latte ships in v1, selectable from the menu (§4.1) and from
-`config.toml`.
+✅ **Shipped** (2026-09-28). `theme = "auto" | "dark" | "light"`, default
+`auto`, which follows macOS and repaints the prewarmed panel live. The old
+flavour names are accepted as aliases. Selectable from the menu, Settings
+→ Appearance (with a preview), and `config.toml`.
 
-| # | Requirement |
-|---|---|
-| 4.4.1 | `Theme.catppuccinLatte` alongside `Theme.catppuccinMocha`, same ten tokens. Starting values: `bg` `#eff1f5` (base), `bg_input` `#e6e9ef` (mantle), `border` `#bcc0cc` (surface1), `fg` `#4c4f69` (text), `fg_dim` `#8c8fa1` (overlay1), `fg_muted` `#9ca0b0` (overlay0), `accent` `#8839ef` (mauve), `accent_alt` `#1e66f5` (blue), `sel_bg` `#ccd0da` (surface0), `warn` `#df8e1d` (yellow). Verify every hex against `catppuccin/catppuccin` before shipping — `UX.md` §7 carries the same warning about the Mocha set, and it has not been discharged. |
-| 4.4.2 | Re-check the tokens that were tuned for a dark panel. On Latte, `fg_dim`/`fg_muted` must be *darker* than `fg`'s surroundings rather than lighter, the 1pt `border` at `#bcc0cc` can disappear against a light window behind it (consider crust `#dce0e8` or a heavier border in light mode), and `warn` yellow on a light background is the weakest contrast pair in the palette. Check the matched-character accent against `sel_bg` too — that pairing carries the whole fuzzy-match affordance. |
-| 4.4.3 | `Config.parse` must actually read `[appearance] theme`, accepting `catppuccin-mocha`, `catppuccin-latte`, and (per **Q11**) `auto`. Today the key is written into every default config and silently ignored — see §4.2. An unknown value must be reported, not defaulted away. |
-| 4.4.4 | Menu: a **Theme** submenu with radio-state items. Selecting one applies it immediately and persists it (**Q9** decides where). |
-| 4.4.5 | Runtime switching without a relaunch. `PanelController` captures `Config` at `init` and `PikaView` holds it as a `let`; the panel is prewarmed once and must **not** be rebuilt (TECHNICAL.md §9: a cold `orderFront` costs ~150ms vs ~3ms warm). Make the config/theme a mutable property with an `apply(_:)` that updates `view.layer.borderColor` and calls `needsDisplay = true`. Verify the panel is invisible when the switch happens, or that the repaint is clean if it is not. |
-| 4.4.6 | `Config.defaultText` documents both values in the comment on the `theme` line. |
-| 4.4.7 | `UX.md` §7 gains the Latte column, and `THIRD-PARTY` attribution (§6.3) covers the Latte palette under the same Catppuccin MIT licence. |
+| # | Requirement | Status |
+|---|---|---|
+| 4.4.1 | `Theme.catppuccinLatte`, hex verified | ✅ All values checked against `catppuccin/palette`. |
+| 4.4.2 | Re-check tokens tuned for a dark panel | ✅ The one-to-one mapping proposed here failed contrast (dim text 2.8:1). Latte uses subtext0, overlay2, overlay0 for the border, and overlay2 at 20% for the selection; matched characters are semibold in both themes. Reasoning in `SETTINGS.md` §3.2; floors enforced by `ThemeContrastTests`. |
+| 4.4.3 | `Config.parse` reads `theme`, reports unknown values | ✅ (Q11: `auto` ships). |
+| 4.4.4 | Theme submenu that persists | ✅ Writes `config.toml` in place, keeping comments (Q9 option a). |
+| 4.4.5 | Runtime switching without rebuilding the panel | ✅ `Appearance.swift`; the panel and its border repaint in place. |
+| 4.4.6 | `defaultText` documents the values | ✅ |
+| 4.4.7 | `UX.md` §7 Latte column; attribution | ✅ |
 
 ### 4.5 Privacy and permissions, in writing — in the README
 
 **No `PRIVACY.md`.** A separate file is one more click away from the
 person deciding whether to trust this, and it will drift. The disclosure
-is a README section, linked from the top, and it is the same text O1
-points at (`r`).
+is a README section, linked from the top, and it is the same text
+Settings → Privacy & Data links to ("Read the privacy notes").
 
 It must state plainly:
 
@@ -340,8 +200,12 @@ It must state plainly:
 - Which permissions are requested, which are required, and — worth
   stating, per `TECHNICAL.md` §6 — which are deliberately *not*:
   Screen Recording and Input Monitoring are avoided by design.
-- How to see and delete the data: the paths above, the **Forget learned
-  queries…** menu item, and `uninstall.sh` (§4.1.8).
+- How to see and delete the data: the paths above, Settings → Privacy &
+  Data (show each file in Finder, clear recency, forget learned queries,
+  delete the icon cache), and `uninstall.sh` (§4.1.8, not yet written —
+  the README's commands stand in).
+- How long it keeps it: recency entries expire after 30 days (at most
+  10,000), learned queries fade 2% a day (at most 500).
 
 ---
 
@@ -351,8 +215,9 @@ It must state plainly:
 
 | Path | Contents | Worst case if read |
 |---|---|---|
-| `…/Application Support/io.github.tiagowright.pika/mru.json` | `bundleID\0discriminator` → timestamp, plus a `bundleID\0title:<title>` fallback key per window | Window titles, and **full Chrome tab URLs including query strings** — session tokens, doc IDs, search terms |
-| `…/Application Support/io.github.tiagowright.pika/learned.json` | normalised query → target key → count | Every query you have typed, and what it resolved to |
+| `…/Application Support/io.github.tiagowright.pika/mru.json` | `bundleID\0discriminator` → timestamp, plus a `bundleID\0title:<title>` fallback key per window. Now bounded: 30 days, 10,000 entries | Window titles, and **full Chrome tab URLs including query strings** — session tokens, doc IDs, search terms |
+| `…/Application Support/io.github.tiagowright.pika/learned.json` | `{decayedAt, counts}`: normalised query → target key → count. Now bounded: 2% daily decay, 500 queries | Queries you have typed, and what they resolved to |
+| `…/Application Support/io.github.tiagowright.pika/state.json` | onboarding progress, skipped items, last Chrome Automation answer | Nothing sensitive |
 | `…/Caches/io.github.tiagowright.pika/icons/<bundleID>.png` | rasterised icons | The list of apps you run, from the filenames alone |
 | `~/.config/pika/config.toml` | settings | Nothing sensitive |
 
@@ -444,7 +309,7 @@ is specified above so it can land in v1.1 without redesign — or in v1 if
 
 | # | File | Must contain |
 |---|---|---|
-| 6.1 | 🟡 **Partly done** (2026-09-21). `README.md` covers what it is, requirements, build/install, the signing trap, a permission table, the keys, the `Ctrl+Space` collision, an annotated config (flagging `theme`/`font` as not yet read), the privacy disclosure, uninstall, known rough edges, and the as-is statement. **Still missing:** a screenshot or GIF, the notarized-download path (§3), the menu bar item (§4.1), and theme switching (§4.4). |
+| 6.1 | 🟡 **Partly done** (2026-09-21). `README.md` covers what it is, requirements, build/install, the signing trap, a permission table, the keys, the `Ctrl+Space` collision, an annotated config (flagging `theme`/`font` as not yet read), the privacy disclosure, uninstall, known rough edges, and the as-is statement. Since 2026-09-29 it also covers the menu bar item and Settings, first-run setup, theme switching, data retention, and running the tests. **Still missing:** a screenshot or GIF, the measured latencies (`TK ms`), and the notarized-download path (§3). |
 | 6.2 | ✅ **Done** (2026-09-21). `LICENSE` — MIT, Tiago Wright, 2026. |
 | 6.3 | ✅ **Done** (2026-09-21). `THIRD-PARTY.md` carries both notices and the README links it. The full OFL 1.1 text is at `Sources/Pika/Resources/JetBrainsMono-OFL.txt`, and `Package.swift` copies it into the `.app` beside the font so the licence travels with every binary. Catppuccin's MIT notice is reproduced in full; the ten Mocha values in `Theme.swift` were checked against `catppuccin/palette` and all ten match. Latte falls under the same notice when §4.4 lands. |
 | 6.4 | `CHANGELOG.md` | *Nice to have* at v1, but cheap to start and annoying to reconstruct later. |
@@ -460,9 +325,9 @@ is specified above so it can land in v1.1 without redesign — or in v1 if
 | # | Requirement |
 |---|---|
 | 7.1 | **Private API fallback.** `PrivateAX.swift` declares `_AXUIElementGetWindow` via `@_silgen_name`. `TECHNICAL.md` §13 promises to "feature-detect; degrade to (pid, title) matching" — that fallback is **not implemented**. The symbol resolving is a link-time assumption: if it ever disappears, Pika does not degrade, it fails to launch. At minimum, verify behaviour when it is absent and document the risk in the README. |
-| 7.2 | **A smoke test in CI.** GitHub Actions on `macos-latest` running `swift build -c release` and `./build.sh release` (ad-hoc signed). You have no test suite and are not obliged to write one, but a PR that does not compile should not need you to notice it by hand. |
-| 7.3 | **A clean-machine run.** Install the notarized artifact on a Mac (or a fresh user account) that has never had Pika, with no Accessibility grant and no `~/.config/pika`, and walk the whole first-run path — including **denying** Accessibility to reach O3, recovering from the menu (§4.1.4), and denying Chrome Automation. This is the one test that catches what a checklist cannot. |
-| 7.4 | **A denied-then-recovered run.** Specifically verify that `tccutil reset` (or whatever §4.1.5 concludes) genuinely brings the system prompt back on the shipping macOS version. The entire recovery story in §4.1 and O3 rests on that being true. |
+| 7.2 | **A smoke test in CI.** GitHub Actions on `macos-latest` running `swift build -c release`, `./build.sh release` (ad-hoc signed), and `swift test`. There is now a Swift Testing suite (config parsing and writing, the file watcher, theme contrast floors, shortcut clashes, state and history trimming). With Command Line Tools alone, `swift test` intermittently fails with "plugin for module 'TestingMacros' not found"; CI should use a full Xcode toolchain, where it is reliable. |
+| 7.3 | **A clean-machine run.** Install the notarized artifact on a Mac (or a fresh user account) that has never had Pika, with no Accessibility grant and no `~/.config/pika`, and walk the whole first-run path — including **denying** Accessibility to reach the checklist's troubleshooting, recovering via Run Setup Again (§4.1.4), and denying Chrome Automation. This is the one test that catches what a checklist cannot. |
+| 7.4 | **A denied-then-recovered run.** Specifically verify that `tccutil reset` (or whatever §4.1.5 concludes) genuinely brings the system prompt back on the shipping macOS version. The entire recovery story in §4.1 and the checklist's troubleshooting rests on that being true. Also exercise the Chrome denied → granted path, which `ChromeTabSource.permissionGranted()` handles but no one has run. |
 
 ---
 
@@ -485,38 +350,56 @@ is specified above so it can land in v1.1 without redesign — or in v1 if
 
 ## 9. Decisions I need from you
 
+**Q1–Q11 are decided** (2026-09-28/29; the questions are kept below for
+the reasoning). **Q12–Q14 are still open.**
+
+| # | Decision |
+|---|---|
+| Q1 | Closing Setup without Accessibility leaves Pika running, with the menu bar badge as the way back; it doesn't quit. |
+| Q2 | Not pre-checked. Start at login is a checklist row with a prominent Turn On and a Skip; never silent. |
+| Q3 | Full activation for Setup and Settings: Pika becomes a regular app (Dock, ⌘Tab) while they're open, and activates outright. |
+| Q4 | Done finishes without pressing the hotkey; pressing it also finishes and opens the switcher. |
+| Q5 | Chrome is a checklist row with its explanation on screen; Allow… brings up Apple's dialog in context. |
+| Q6 | Run Setup Again always starts at Welcome; the checklist shows what's already done. |
+| Q7 | 20 seconds. "Listed but switched off" can't be detected without reading TCC.db, so there's no immediate trigger. |
+| Q8 | Yes: a hotkey recorder in Settings → General, and inline in the checklist when the hotkey has a problem. |
+| Q9 | (a): Pika edits the one line in `config.toml`, keeping comments and order. |
+| Q10 | The `onboardingVersion` mechanism is in place; highlighting only the new rows waits for a second version. |
+| Q11 | Yes, and `auto` is the default. |
+
+
 **Onboarding (§4.3)**
 
-- **Q1 — `esc` at the permission wall.** Quit Pika outright, or leave it
+- ✅ **Q1 — `esc` at the permission wall.** Quit Pika outright, or leave it
   running headless so the user can grant later and press the hotkey?
   Quitting is honest; staying resident means a user who never grants has
   a process they cannot see. *Recommendation: quit, and say so on the
   screen.*
-- **Q2 — Launch at login default.** Pre-checked or unchecked on O4? A
+- ✅ **Q2 — Launch at login default.** Pre-checked or unchecked on O4? A
   login-at-launch switcher is the normal expectation, but pre-checking
   is a soft version of the silent registration we are removing.
   *Recommendation: pre-checked, visible, one keystroke to clear.*
-- **Q3 — Focus.** The main panel is a `.nonactivatingPanel` that never
+- ✅ **Q3 — Focus.** The main panel is a `.nonactivatingPanel` that never
   steals focus. Onboarding needs real key focus and sends the user to
   System Settings and back. Accept full activation for onboarding only,
   or keep it non-activating and lose the app-switch affordances?
-- **Q4 — Is O4 dismissible?** Does the user have to press the hotkey once
+- ✅ **Q4 — Is O4 dismissible?** Does the user have to press the hotkey once
   before onboarding closes ("you have now used the product"), or does
   Enter close it regardless?
-- **Q5 — Chrome pre-notice.** Before the first Apple Event, does Pika
+- ✅ **Q5 — Chrome pre-notice.** Before the first Apple Event, does Pika
   show one line ("reading Chrome tabs will ask for Automation next"), or
   let Apple's dialog arrive cold? *Recommendation: one line — an
   unexplained Automation prompt is the second-scariest moment in the
   flow.*
-- **Q6 — Re-run scope (§4.1.4).** Does "Run first-run setup again"
+- ✅ **Q6 — Re-run scope (§4.1.4).** Does "Run first-run setup again"
   restart from O1 always, or jump to the first unsatisfied step?
-- **Q7 — O2 → O3 timeout.** How long in the waiting state before
+- ✅ **Q7 — O2 → O3 timeout.** How long in the waiting state before
   troubleshooting appears? *Recommendation: 20 seconds, or immediately
   if Pika is listed-but-off.*
-- **Q8 — Inline hotkey capture.** If `Ctrl+Space` is taken, does O4 offer
+- ✅ **Q8 — Inline hotkey capture.** If `Ctrl+Space` is taken, does O4 offer
   to capture a replacement keystroke (needs no extra permission, but does
   need the config writer in Q9), or just point at `config.toml`?
-- **Q9 — Who owns `config.toml`?** The menu's theme switcher, the
+- ✅ **Q9 — Who owns `config.toml`?** The menu's theme switcher, the
   launch-at-login state, and Q8's hotkey capture all need to persist a
   user choice. Options: (a) Pika surgically rewrites the single line in
   `config.toml`, preserving the user's comments and ordering — real work,
@@ -524,14 +407,14 @@ is specified above so it can land in v1.1 without redesign — or in v1 if
   `state.json` and `config.toml` wins when it sets a key — less work,
   but "I chose Latte in the menu and it snapped back after editing my
   config" is a confusing bug report. *Recommendation: (a).*
-- **Q10 — Onboarding for upgraders.** Someone on v1 who already granted
+- ✅ **Q10 — Onboarding for upgraders.** Someone on v1 who already granted
   everything installs v1.1, which wants a new permission. Re-run only the
   new step (the `onboardingVersion` design above), or never re-run and
   handle it from the menu?
 
 **Theme (§4.4)**
 
-- **Q11 — Is there a "Follow system" mode in v1?** It means observing
+- ✅ **Q11 — Is there a "Follow system" mode in v1?** It means observing
   `NSApp.effectiveAppearance` and repainting on change, and a third
   `theme = "auto"` value. *Recommendation: yes — a light-mode user who
   installs Pika and gets a dark panel has no idea the option exists, and
@@ -565,13 +448,11 @@ Not blockers. Listed so they are decisions rather than oversights.
 - App Store distribution — ruled out by `_AXUIElementGetWindow` anyway.
 - A test suite beyond the CI build (`FuzzyMatcher` is the one piece with
   a clean, pure interface worth unit-testing when the mood strikes).
-- Hiding the menu bar icon. It is the only re-entry point for the
-  permission flow (§4.1), so an option to hide it needs a second path
-  (a CLI, or a URL scheme) before it can exist.
+- Hiding the menu bar icon. Reopening Pika.app now opens Settings, which
+  is the second way in this needed; what's left is the setting itself.
 - The other Catppuccin flavours (Frappé, Macchiato) and arbitrary
   palettes from a `[colors]` table in `config.toml`. Mocha and Latte
   cover dark and light; the token layer already makes the rest cheap.
-- A preferences window. The menu plus `config.toml` is the v1 surface.
 - Intel / `x86_64` support and a universal binary.
 - Localisation.
 - Non-Chrome browsers, and everything else in `UX.md` §11.
